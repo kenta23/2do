@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
+import { AuthError } from '@supabase/supabase-js'
 
 
 const supabase = createClient();
@@ -67,7 +68,7 @@ export async function signInWithEmail(prevState: any, formData: FormData) {
 
      if (!result.success) {
         return { 
-          message: result.error.flatten().fieldErrors
+          message: result.error.flatten().fieldErrors.email
         }
      }
 
@@ -75,16 +76,16 @@ export async function signInWithEmail(prevState: any, formData: FormData) {
         email: result.data.email,
         options: {
             shouldCreateUser: false,    
-        }
+        },
+  
     })
 
-    if(data.user) { 
-       redirect('/todo')
+    if(data.session) { 
+       redirect('/todo');
     }
-
-    if(error) {
+    if (error ) { 
        return {
-        message: "Something went wrong ", error,
+        message: (error as AuthError).message,
        }
     }
     else {

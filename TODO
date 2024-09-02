@@ -1,0 +1,5 @@
+
+Todo:
+  ☐ add OTP code function to email 
+  ☐ database migration
+  ☐ fix bug on sign in when user already signed in, it can't redirect to / or /todo
