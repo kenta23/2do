@@ -3,6 +3,7 @@ import Sidebar from "./sidebar";
 import Search from "./search";
 import { getUser } from "@/utils/supabase/getUser";
 import { createClient } from "@/utils/supabase/server";
+import { User } from "@/types";
 
 export const metadata: Metadata = {
   title: "2Do",
@@ -21,7 +22,7 @@ export default async function RootLayout({
       <Sidebar />
 
       <div className="w-full ">
-        <Search user={data.user} />
+        <Search user={data.user as User} />
         {children}
       </div>
     </div>

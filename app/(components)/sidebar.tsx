@@ -48,7 +48,7 @@ const listItems: Array<{
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <div className="w-[265px] border-r-yellow-700 border  py-2">
+    <div className="w-[265px] border-r-[#F1D7B0] border-r py-2">
       {/* LOGO */}
       <div className="flex justify-center p-2 w-full text-center mx-auto">
         <Image
