@@ -94,7 +94,7 @@ export default function AddNewTaskBtn() {
   };
 
   return (
-    <div className="text-center mx-auto flex justify-center align-bottom sticky bottom-0 w-full">
+    <div className="text-center mx-auto flex justify-center align-bottom  translate-x-1/2 fixed bottom-3 ">
       {/* DIALOG BTN */}
 
       <Popover>

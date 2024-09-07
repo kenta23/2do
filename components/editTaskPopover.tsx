@@ -5,7 +5,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { set, z } from "zod";
 import dayjs, { Dayjs } from "dayjs";
 import { Paperclip, X } from "lucide-react";
 import { Button } from "./ui/button";
@@ -25,14 +25,15 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     handleSubmit: submit,
     formState: { errors },
     reset,
-    setValue,
     getValues,
+    watch,
+    setValue,
   } = useForm<editFormData>({
     resolver: zodResolver(editSchemawithID),
     defaultValues: {
       id: taskId,
       content: taskValue?.content,
-      duedate: new Date(dueDate.format("MM/DD/YYYY hh:mm aa")),
+      duedate: new Date(dueDate.format("MM/DD/YYYY hh:mm aa")) || new Date(),
     },
   });
 
@@ -63,7 +64,11 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     if (taskValue?.duedate) {
       setStoreDueDate(dayjs(taskValue.duedate));
     }
-  }, [taskId, reset, taskValue]);
+
+    if (taskValue?.id) {
+      setValue("id", taskValue?.id);
+    }
+  }, [taskId, reset, taskValue, setValue]);
 
   //api call for post request to server
   const {
@@ -74,9 +79,12 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     isSuccess,
     reset: mutateReset,
   } = useMutation({
-    mutationFn: (data: z.infer<typeof editSchemawithID>) =>
-      editTask(data, pathName),
+    mutationFn: async (data: z.infer<typeof editSchemawithID>) =>
+      await editTask(data, pathName),
   });
+
+  console.log("ERRORS", errors);
+  console.log("MY task id", watch("id"));
 
   const submitData: SubmitHandler<editFormData> = (data: editFormData) => {
     console.log("clicked submit"); // This should log when submit is clicked
@@ -130,6 +138,9 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
 
   return (
     <form className="h-full w-full" onSubmit={submit(submitData)}>
+      {isSuccess && (
+        <p className="text-green-500 text-sm">Successfully Edited Task</p>
+      )}
       <div className="flex h-full mt-[10px] gap-3 items-start flex-col w-full ">
         <input
           type="text"
@@ -138,14 +149,17 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
           defaultValue={taskValue?.content ?? ""}
           {...register("content")}
         />
-        <p>{errors.content?.message}</p>
+        {errors.content && (
+          <p className="text-red-500 text-sm">{errors.content.message}</p>
+        )}
 
         {/* icons */}
-        <div className="flex w-full gap-3 items-center">
+        <div className="flex flex-col  w-full gap-3 space-y-3 items-start">
           {/**DUE DATE */}
           <DateTimePicker
             label="Due"
             className="h-10 w-full"
+            {...register("duedate")}
             value={storeDueDate ? dayjs(storeDueDate) : null}
             onChange={(newValue) => {
               setStoreDueDate(newValue ? newValue.toDate() : null);
@@ -163,8 +177,12 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
               },
             })}
           />
+          {errors.duedate && (
+            <p className="text-red-500 text-sm mt-2">
+              {errors.duedate.message}
+            </p>
+          )}
         </div>
-        <p>{errors.duedate?.message}</p>
       </div>
 
       <div className="mt-8">

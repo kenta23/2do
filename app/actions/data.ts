@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { NextRequest, NextResponse } from "next/server";
 import { editFormData, FormData } from "@/lib/schema";
+import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient().$extends(withAccelerate());
 const supabase = createClient();
@@ -44,26 +45,33 @@ export async function createMyTask(data: FormData, pathname: string) {
   });
 
   console.log("NEW TASK SAVED", newData);
+  revalidatePath("/planned");
 
   // Return only serializable data to the client
 }
 
-export async function getTask() {
+export async function getTask(pathname: string) {
   const user = await supabase.auth.getUser();
+
+  console.log("my pathname in server", pathname);
 
   // Check if user is authenticated
   if (!user.data.user) {
     throw new Error("User not authenticated");
   }
 
-  // Retrieve tasks for the authenticated user from Prisma
-  const data = await prisma.task.findMany({
-    where: {
-      userId: user.data.user.id, // Filter by userId, not id
-    },
-  });
+  try {
+    // Retrieve tasks for the authenticated user from Prisma
+    const data = await prisma.task.findMany({
+      where: {
+        userId: user.data.user.id, // Filter by userId, not id
+      },
+    });
 
-  return data;
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 export async function editTask(data: editFormData, pathname: string) {
@@ -87,6 +95,8 @@ export async function editTask(data: editFormData, pathname: string) {
             : null,
       },
     });
+
+    revalidatePath("/planned");
     return newData;
   } catch (error) {
     console.log(error);
@@ -109,5 +119,67 @@ export async function getSingleTask(taskId: string) {
   } catch (error) {
     console.log(error);
     return;
+  }
+}
+
+//fetch important tasks
+export async function fetchImportantTasks() {
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const data = await prisma.task.findMany({
+      where: { important: true },
+    });
+
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+//delete single task
+export async function deleteSingleTask(taskId: string) {
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const data = await prisma.task.delete({
+      where: { id: taskId as string },
+    });
+
+    console.log("DELETED DATA");
+    revalidatePath("/planned");
+
+    return data;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
+export async function fetchPlannedTodos() {
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const data = await prisma.task.findMany({
+      where: { userId: user.data.user.id },
+    });
+
+    revalidatePath("/planned");
+
+    return data;
+  } catch (error) {
+    console.log(error);
   }
 }

@@ -8,6 +8,7 @@ export const Taskschema = z.object({
       required_error: "Content is required",
       invalid_type_error: "Invalid content",
     })
+    .min(1)
     .max(100),
   duedate: z
     .date({ invalid_type_error: "Remind me date is invalid" })

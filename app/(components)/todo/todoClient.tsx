@@ -6,12 +6,13 @@ import TaskList from "@/components/TaskList";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function TodoClient() {
+  const pathName = usePathname();
   const { data, error, isSuccess } = useQuery({
     queryKey: ["tasklist"],
-    queryFn: async () => await getTask(),
-    staleTime: 1000 * 60,
+    queryFn: async () => await getTask(pathName),
   });
 
   console.log("data", data);
