@@ -10,23 +10,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { AccordionItem } from "@radix-ui/react-accordion";
-
-import {
-  Bell,
-  EllipsisVertical,
-  Pencil,
-  Plus,
-  Star,
-  Trash,
-} from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import EditTaskPopover from "@/components/editTaskPopover";
-import { listStyles } from "@/components/TaskList";
-import { QueryClient } from "@tanstack/react-query";
 import TaskItem from "../taskItem";
 
 const isTodayTask = (taskDueDate: Date) => {
@@ -77,12 +60,26 @@ export default function PlannedTodoClient({
                         new Date(a.createdAt).getTime() -
                         new Date(b.createdAt).getTime()
                     )
-                    .filter(
-                      (task) =>
-                        task.duedate &&
-                        new Date(task?.duedate).getTime() < new Date().getTime()
-                    )
-                    .map((task, i) => <TaskItem task={task} key={task.id} />)
+                    .filter((task) => {
+                      const now = new Date();
+                      const startOfToday = new Date(
+                        now.getFullYear(),
+                        now.getMonth(),
+                        now.getDate()
+                      );
+                      const endOfToday = new Date(
+                        now.getFullYear(),
+                        now.getMonth(),
+                        now.getDate() + 1,
+                        0,
+                        0,
+                        -1
+                      ); // 11:59:59 PM today
+                      task.duedate &&
+                        task.duedate < startOfToday &&
+                        task.duedate > endOfToday;
+                    })
+                    .map((task) => <TaskItem task={task} key={task.id} />)
                 ) : (
                   <p className="text-start text-black text-sm">Task is Empty</p>
                 )}
@@ -126,11 +123,31 @@ export default function PlannedTodoClient({
                       new Date(a.createdAt).getTime() -
                       new Date(b.createdAt).getTime()
                   )
-                  .filter(
-                    (task) =>
-                      task.duedate &&
-                      new Date(task.duedate).getTime() > new Date().getTime()
-                  )
+                  .filter((task) => {
+                    const now = new Date();
+                    const formattedDate = now.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long", // Use 'short' for abbreviated month
+                      day: "2-digit",
+                      weekday: "long", // To include the day of the week like 'Monday'
+                    });
+
+                    const startOfTomorrow = new Date(
+                      now.getFullYear(),
+                      now.getMonth(),
+                      now.getDate() + 1
+                    );
+                    const endOfTomorrow = new Date(
+                      now.getFullYear(),
+                      now.getMonth(),
+                      now.getDate() + 2,
+                      0,
+                      0,
+                      -1
+                    ); // 11:59:59 PM tomorrow
+
+                    return task.duedate && task.duedate > now;
+                  })
                   .map((task, i) => (
                     <TaskItem task={task} key={task.id} />
                   ))}
@@ -158,9 +175,6 @@ export default function PlannedTodoClient({
           </div>
         </div>
       )}
-
-      {/* FLOATING MODAL BUTTON */}
-      <AddNewTaskBtn />
     </div>
   );
 }

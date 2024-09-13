@@ -8,6 +8,16 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  userId       String
+  email        String?       @unique
+  collabTasks  CollabTasks[]
+  pendingTasks PendingTask[] @relation("pendingTasks")
+  myTasks      Task[]        @relation("owner")
+}
+
 model Task {
   id        String    @id @default(cuid())
   userId    String
@@ -18,4 +28,46 @@ model Task {
   duedate   DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  user      User      @relation("owner", fields: [userId], references: [id])
+  list      List[]    @relation("ListToTask")
+}
+
+model List {
+  id          String        @id @default(cuid())
+  name        String
+  userId      String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  collabTasks CollabTasks[] @relation("CollabTasksToList")
+  tasks       Task[]        @relation("ListToTask")
+}
+
+model CollabTasks {
+  id          String    @id @default(cuid())
+  content     String
+  important   Boolean   @default(false)
+  remind_me   DateTime?
+  completed   Boolean   @default(false)
+  joinedUsers String[]
+  duedate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  owner       User      @relation(fields: [userId], references: [id])
+  lists       List[]    @relation("CollabTasksToList")
+}
+
+model PendingTask {
+  id        String       @id @default(cuid())
+  userId    String
+  taskId    String
+  createdAt DateTime     @default(now())
+  status    CollabStatus @default(PENDING)
+  user      User         @relation("pendingTasks", fields: [userId], references: [id])
+}
+
+enum CollabStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

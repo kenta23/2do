@@ -6,12 +6,22 @@ import Link from "next/link";
 import {
   BriefcaseBusiness,
   NotepadText,
+  Plus,
   Star,
   Sun,
   UsersRound,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const listItems: Array<{
   id: number;
@@ -85,8 +95,10 @@ export default function Sidebar() {
           </Link>
 
           <Link
-            href={"/"}
-            className="flex gap-2 items-center w-full h-[45px] px-3"
+            href={"/collaborations"}
+            className={cn("flex gap-2 items-center w-full h-[45px] px-3", {
+              "bg-secondaryColor text-white": pathname === "/collaborations",
+            })}
           >
             <UsersRound size={26} />
             <li className="text-md">Collaborative Tasks</li>
@@ -107,7 +119,46 @@ export default function Sidebar() {
             <Star size={26} />
             <li className="text-md">Important</li>
           </Link>
+
+          <hr className="w-full" />
         </ul>
+
+        {/** ADD NEW TASKS */}
+
+        <div>
+          {/* ADD NEW LIST BUTTON */}
+
+          <Dialog>
+            <DialogTrigger>
+              <div className="w-full mt-2 h-[45px] px-3 cursor-pointer text-[#8B4B1D] flex gap-2 items-center">
+                <Plus />
+                <p className="text-md">Add new list</p>
+              </div>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <h4>Add new list</h4>
+                <p className="text-sm font-light ">
+                  You can add list as many as you can
+                </p>
+              </DialogHeader>
+
+              <form action="" className="flex ">
+                <Input />
+              </form>
+
+              <DialogFooter>
+                <Button
+                  className="bg-primaryColor hover:bg-orange-300 duration-150 ease-linear transition-colors"
+                  type="submit"
+                >
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   );

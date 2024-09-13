@@ -10,6 +10,28 @@ export type TaskType = {
   updatedAt: Date;
 };
 
+export type CollabTasksType = {
+  id: string;
+  content: string;
+  important: boolean;
+  remind_me: Date | null;
+  completed: boolean;
+  joinedUsers: string[];
+  duedate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+};
+
+export type PendingTaskType = {
+  id: string;
+  userId: string;
+  taskId: string;
+  createdAt: Date;
+  status: CollabStatus;
+  user: User;
+};
+
 export type User = {
   id: string;
   aud: string;

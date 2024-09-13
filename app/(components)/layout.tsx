@@ -4,6 +4,7 @@ import Search from "./search";
 import { getUser } from "@/utils/supabase/getUser";
 import { createClient } from "@/utils/supabase/server";
 import { User } from "@/types";
+import AddNewTaskBtn from "@/components/addNewTaskBtn";
 
 export const metadata: Metadata = {
   title: "2Do",
@@ -24,6 +25,10 @@ export default async function RootLayout({
       <div className="w-full ">
         <Search user={data.user as User} />
         {children}
+      </div>
+
+      <div className="text-center w-full mx-auto flex justify-center align-bottom fixed bottom-3">
+        <AddNewTaskBtn />
       </div>
     </div>
   );

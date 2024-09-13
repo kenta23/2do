@@ -22,6 +22,7 @@ export default function Search({ user }: { user: User | null }) {
     await supabase.auth.signOut();
     router.push("/sign-in");
   };
+
   return (
     <div className="w-full  h-[70px] px-4 py-2">
       <nav className="w-full flex">
@@ -57,7 +58,9 @@ export default function Search({ user }: { user: User | null }) {
                 align="start"
                 side="bottom"
               >
-                <div className="bg-white p-2">User settings</div>
+                <button className="" onClick={signOut}>
+                  <span>Log out</span>
+                </button>
               </PopoverContent>
             </Popover>
           </li>

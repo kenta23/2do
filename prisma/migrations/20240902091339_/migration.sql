@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE "Task" ALTER COLUMN "createdAt" SET DATA TYPE TIMESTAMP(6),
-ALTER COLUMN "updatedAt" SET DEFAULT (now() AT TIME ZONE 'utc'::text),
-ALTER COLUMN "updatedAt" SET DATA TYPE TIMESTAMP(6);

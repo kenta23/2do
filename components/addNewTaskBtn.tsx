@@ -16,6 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { FormData, Taskschema } from "@/lib/schema";
+import { Input } from "./ui/input";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function AddNewTaskBtn() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +97,7 @@ export default function AddNewTaskBtn() {
   };
 
   return (
-    <div className="text-center mx-auto flex justify-center align-bottom  translate-x-1/2 fixed bottom-3 ">
+    <div className="">
       {/* DIALOG BTN */}
 
       <Popover>
@@ -203,6 +206,31 @@ export default function AddNewTaskBtn() {
                 </div>
               ))}
             </div>
+
+            {/* IF ITS IN THE COLLABORATION PAGE THEN DISPLAY THIS FORM */}
+            {pathname === "/collaborations" && (
+              <div className="w-full mt-4 space-y-3">
+                <p className="text-md font-medium">Assigned To</p>
+                <Input placeholder="Enter Username or Email" />
+
+                <div className="mt-3">
+                  <p className="text-sm">Collaborators</p>
+
+                  <ul className="mt-2 pt-2">
+                    <li className="flex items-center gap-3">
+                      <Image
+                        alt="User Avatar"
+                        width={50}
+                        className="rounded-full"
+                        height={100}
+                        src={"/Logo.png"}
+                      />
+                      <span>John Doe</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
 
             <Button
               type="submit"

@@ -24,7 +24,7 @@ export default function TodoClient() {
       {data ? (
         <TaskList data={data} />
       ) : (
-        <div className="text-center my-auto   h-[500px] mx-auto mt-[20px] w-auto px-4">
+        <div className="text-center my-auto h-[500px] mx-auto mt-[20px] w-auto px-4">
           <div className="flex flex-col gap-6 items-center">
             <Image
               src={"/note.png"}
@@ -43,8 +43,6 @@ export default function TodoClient() {
           </div>
         </div>
       )}
-      {/* FLOATING MODAL BUTTON */}
-      <AddNewTaskBtn />
     </div>
   );
 }

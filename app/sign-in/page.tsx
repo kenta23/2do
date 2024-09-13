@@ -1,11 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { use } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { signInWithEmail } from "../actions/login";
 import { useFormState, useFormStatus } from "react-dom";
 import { createClient } from "@/utils/supabase/client";
+import { PrismaClient } from "@prisma/client";
+import { User } from "@/types";
+import { withAccelerate } from "@prisma/extension-accelerate";
 
 const initialState: any = {
   message: "",
@@ -18,12 +21,16 @@ export default function SignIn() {
   const supabase = createClient();
 
   async function signInWithGithub() {
-    await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: "http://localhost:3000/auth/callback",
-      },
-    });
+    try {
+      const user = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: {
+          redirectTo: "http://localhost:3000/auth/callback",
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (

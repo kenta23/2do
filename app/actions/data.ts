@@ -10,33 +10,29 @@ import { editFormData, FormData } from "@/lib/schema";
 import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient().$extends(withAccelerate());
+
 const supabase = createClient();
 
 export async function createMyTask(data: FormData, pathname: string) {
   const user = await supabase.auth.getUser();
 
-  console.log("USER", user);
-  console.log("DATA", data);
+  // Find user by id
+  const userFromDb = await prisma.user.findFirst({
+    select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+    where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+  });
+
+  if (!userFromDb) {
+    throw new Error("User not found, cannot create task");
+  }
   const duedate = data.duedate;
   const remindme = data.remindme;
   let newData;
 
-  // pathname === '/todo' ? newData = await prisma.task.create({
-  //     data: {
-  //         content: data.content,
-  //         userId: user.data.user?.id as string,
-  //         completed: false,
-  //         duedate: duedate !== null || undefined ? dayjs(duedate).toDate() : null,
-  //         remind_me: remindme !== null || undefined ? dayjs(remindme).toDate() : null,
-  //     },
-  // })  : await prisma.planned.create({
-  //      //continue
-  // })
-
   newData = await prisma.task.create({
     data: {
       content: data.content,
-      userId: user.data.user?.id as string,
+      userId: userFromDb.id,
       completed: false,
       duedate: duedate !== null || undefined ? dayjs(duedate).toDate() : null,
       remind_me:
@@ -45,9 +41,7 @@ export async function createMyTask(data: FormData, pathname: string) {
   });
 
   console.log("NEW TASK SAVED", newData);
-  revalidatePath("/planned");
-
-  // Return only serializable data to the client
+  revalidatePath("/todo");
 }
 
 export async function getTask(pathname: string) {
@@ -62,12 +56,16 @@ export async function getTask(pathname: string) {
 
   try {
     // Retrieve tasks for the authenticated user from Prisma
-    const data = await prisma.task.findMany({
-      where: {
-        userId: user.data.user.id, // Filter by userId, not id
-      },
+    const userFromDb = await prisma.user.findFirst({
+      select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+      where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
     });
 
+    const data = await prisma.task.findMany({
+      where: {
+        userId: userFromDb?.id, // Filter by userId, not id
+      },
+    });
     return data;
   } catch (error) {
     console.log(error);
@@ -179,6 +177,60 @@ export async function fetchPlannedTodos() {
     revalidatePath("/planned");
 
     return data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function fetchYourTasksTodos() {
+  const user = await supabase.auth.getUser();
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    //find user by id
+    const userFromDb = await prisma.user.findFirst({
+      select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+      where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+    });
+    const yourTasks = await prisma.collabTasks.findMany({
+      where: {
+        userId: userFromDb?.id,
+      },
+    });
+    return yourTasks;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function fetchAssignedTasks() {
+  const user = await supabase.auth.getUser();
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    //find user by id
+    const userFromDb = await prisma.user.findFirst({
+      select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+      where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+    });
+
+    if (!userFromDb) {
+      throw new Error("User not found");
+    }
+
+    const acceptedTasks = await prisma.collabTasks.findMany({
+      where: {
+        joinedUsers: {
+          has: user.data.user?.id,
+        },
+      },
+    });
+
+    return acceptedTasks;
   } catch (error) {
     console.log(error);
   }
