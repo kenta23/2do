@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
               | "Unknown",
             userId: session.data.user?.id as string,
             email: session.data.user?.email as string,
+            avatar: session.data.user?.user_metadata.avatar_url as string,
           },
         });
 

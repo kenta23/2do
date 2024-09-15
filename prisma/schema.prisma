@@ -13,9 +13,12 @@ model User {
   name         String
   userId       String
   email        String?       @unique
+  avatar       String?
   collabTasks  CollabTasks[]
   pendingTasks PendingTask[] @relation("pendingTasks")
   myTasks      Task[]        @relation("owner")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
 }
 
 model Task {
@@ -27,7 +30,7 @@ model Task {
   completed Boolean   @default(false)
   duedate   DateTime?
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  updatedAt DateTime  @default(now()) @updatedAt
   user      User      @relation("owner", fields: [userId], references: [id])
   list      List[]    @relation("ListToTask")
 }
@@ -37,33 +40,36 @@ model List {
   name        String
   userId      String
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  updatedAt   DateTime      @default(now()) @updatedAt
   collabTasks CollabTasks[] @relation("CollabTasksToList")
   tasks       Task[]        @relation("ListToTask")
 }
 
 model CollabTasks {
-  id          String    @id @default(cuid())
-  content     String
-  important   Boolean   @default(false)
-  remind_me   DateTime?
-  completed   Boolean   @default(false)
-  joinedUsers String[]
-  duedate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userId      String
-  owner       User      @relation(fields: [userId], references: [id])
-  lists       List[]    @relation("CollabTasksToList")
+  id           String        @id @default(cuid())
+  content      String
+  important    Boolean       @default(false)
+  remind_me    DateTime?
+  completed    Boolean       @default(false)
+  joinedUsers  String[]
+  duedate      DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+  userId       String
+  owner        User          @relation(fields: [userId], references: [id])
+  lists        List[]        @relation("CollabTasksToList")
+  pendingTasks PendingTask[] @relation("PendingCollabTasks")
 }
 
 model PendingTask {
   id        String       @id @default(cuid())
   userId    String
   taskId    String
-  createdAt DateTime     @default(now())
   status    CollabStatus @default(PENDING)
   user      User         @relation("pendingTasks", fields: [userId], references: [id])
+  task      CollabTasks  @relation("PendingCollabTasks", fields: [taskId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
 }
 
 enum CollabStatus {

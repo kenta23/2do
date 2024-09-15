@@ -17,7 +17,7 @@ export default async function page() {
         <p>{dateNow()}</p>
       </header>
 
-      {!tasks?.length && !assignedTasks?.length ? (
+      {!tasks?.yourTasks.length && !assignedTasks?.length ? (
         <>
           <div className="text-center my-auto h-[500px] mx-auto mt-[40px] w-auto px-4">
             <div className="flex flex-col gap-6 items-center">
@@ -44,7 +44,7 @@ export default async function page() {
         <div className="h-auto min-h-[500px] space-y-3">
           {/* YOUR OWNED TASKS HERE */}
 
-          <YourTasks tasks={tasks} />
+          <YourTasks tasks={tasks?.yourTasks} users={tasks?.users} />
 
           <header className="mx-8">
             <h2 className="text-2xl font-medium">Assigned Tasks</h2>
@@ -52,7 +52,7 @@ export default async function page() {
           </header>
 
           {/* TASKS ASSIGNED TO YOU */}
-          <AssignedTask tasks={assignedTasks} />
+          <AssignedTask tasks={assignedTasks} users={tasks?.users} />
         </div>
       )}
     </div>

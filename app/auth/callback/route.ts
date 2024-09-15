@@ -29,6 +29,7 @@ export async function GET(request: Request) {
             name: session.data.user?.user_metadata.full_name as string,
             userId: session.data.user?.id as string,
             email: session.data.user?.email as string,
+            avatar: session.data.user?.user_metadata.avatar_url as string,
           },
         });
 

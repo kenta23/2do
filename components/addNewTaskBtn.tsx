@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, CalendarClock, Paperclip, Plus, X } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { ReactElement, useEffect, useRef, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -10,7 +10,7 @@ import {
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createMyTask } from "@/app/actions/data";
+import { createMyTask, suggestedUsers } from "@/app/actions/data";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname } from "next/navigation";
@@ -19,6 +19,7 @@ import { FormData, Taskschema } from "@/lib/schema";
 import { Input } from "./ui/input";
 import Link from "next/link";
 import Image from "next/image";
+import { useDebounce } from "use-debounce";
 
 export default function AddNewTaskBtn() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +29,53 @@ export default function AddNewTaskBtn() {
   const [storeRemindMe, setStoreRemindMe] = useState<Date | null>(null);
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const [text, setText] = useState<string>("");
+  const [debouncedText] = useDebounce(text, 1000);
+  const [userIds, setUserIds] = useState<
+    { id: string; avatar: string; name: string }[]
+  >([]);
+  const [displayUser, setDisplayUser] = useState<boolean>(false);
+  const containerUsers = useRef<HTMLDivElement>(null);
+
+  //real time user suggestion searching
+  const {
+    data: users,
+    isLoading,
+    error: usersError,
+  } = useQuery({
+    queryKey: ["usersearch"],
+    queryFn: async () => await suggestedUsers(debouncedText),
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (users && users.length && text.length) {
+      setDisplayUser(true);
+    } else {
+      setDisplayUser(false);
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerUsers.current &&
+        !containerUsers.current.contains(event.target as Node) &&
+        users &&
+        text.length
+      ) {
+        setDisplayUser(false);
+        console.log("clicked outside the container");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    console.log("display user state", displayUser);
+    //cleanup function
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, users?.length, containerUsers]);
 
   const {
     register,
@@ -36,6 +84,7 @@ export default function AddNewTaskBtn() {
     control,
     setValue,
     getValues,
+    reset: resetValues,
   } = useForm<FormData>({
     resolver: zodResolver(Taskschema),
     defaultValues: {
@@ -53,7 +102,8 @@ export default function AddNewTaskBtn() {
     isSuccess,
     reset,
   } = useMutation({
-    mutationFn: async (datas: FormData) => createMyTask(datas, pathname),
+    mutationFn: async (datas: FormData) =>
+      await createMyTask(datas, pathname, users),
   });
 
   const onSubmit: SubmitHandler<FormData> = (data: FormData) => {
@@ -74,10 +124,18 @@ export default function AddNewTaskBtn() {
           queryKey: ["tasklist"],
           stale: true,
         });
+        resetValues();
+        setUserIds([]);
+
+        setTimeout(() => {
+          reset(); //mutation reset.
+        }, 2000);
       },
       onError: (err) => console.log(err),
     });
   };
+
+  console.log("invited users", userIds);
 
   const openFile = () => {
     if (fileInputRef.current) {
@@ -209,24 +267,107 @@ export default function AddNewTaskBtn() {
 
             {/* IF ITS IN THE COLLABORATION PAGE THEN DISPLAY THIS FORM */}
             {pathname === "/collaborations" && (
-              <div className="w-full mt-4 space-y-3">
+              <div className="w-full  mt-4 space-y-3">
                 <p className="text-md font-medium">Assigned To</p>
-                <Input placeholder="Enter Username or Email" />
+
+                <div className="relative h-auto" ref={containerUsers}>
+                  <Input
+                    placeholder="Enter Username or Email"
+                    value={text}
+                    type="text"
+                    onChange={(e) => {
+                      setText(e.target.value);
+
+                      if (debouncedText) {
+                        queryClient.refetchQueries({
+                          queryKey: ["usersearch"],
+                          exact: true,
+                          type: "active",
+                        });
+                      }
+                    }}
+                    className="h-[45px] border rounded-lg border-secondaryColor"
+                    onFocus={() => setDisplayUser(true)}
+                  />
+
+                  {/* SUGGESTED USERS */}
+                  {users && users.length > 0 && displayUser && (
+                    <div
+                      className={`bg-slate-100 ${
+                        displayUser ? "block" : "hidden"
+                      } z-50 shadow-md rounded-md absolute h-auto w-full px-3 py-2`}
+                    >
+                      <ul className="flex flex-col space-y-1 items-start w-full">
+                        {users &&
+                          users.map((user) => (
+                            <li
+                              onClick={() => {
+                                const alreadyIncludedUsers = userIds.find(
+                                  (item) => item.id === user.id
+                                );
+
+                                if (alreadyIncludedUsers) return;
+                                const addUser = {
+                                  id: user.id,
+                                  avatar: user.avatar as string | "/Logo.png",
+                                  name: user.name,
+                                };
+                                setUserIds((prevUsers) => [
+                                  ...prevUsers,
+                                  addUser,
+                                ]);
+
+                                setDisplayUser(false);
+                                console.log("display user", displayUser);
+                              }}
+                              key={user.id}
+                              className="flex cursor-pointer w-full h-full mb-1 border-b-[1px] items-center gap-3"
+                            >
+                              <Image
+                                alt="User Avatar"
+                                width={50}
+                                className="rounded-full"
+                                height={100}
+                                src={user.avatar ? user.avatar : "/Logo.png"}
+                              />
+                              <span className="text-sm">{user.name}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
 
                 <div className="mt-3">
                   <p className="text-sm">Collaborators</p>
 
-                  <ul className="mt-2 pt-2">
-                    <li className="flex items-center gap-3">
-                      <Image
-                        alt="User Avatar"
-                        width={50}
-                        className="rounded-full"
-                        height={100}
-                        src={"/Logo.png"}
-                      />
-                      <span>John Doe</span>
-                    </li>
+                  <ul className="mt-1 pt-2">
+                    {userIds &&
+                      userIds.map((user) => (
+                        <li
+                          key={user.id}
+                          className="flex items-center gap-3 cursor-pointer w-fit px-2"
+                        >
+                          <Image
+                            alt="User Avatar"
+                            width={35}
+                            className="rounded-full"
+                            height={100}
+                            src={user.avatar ? user.avatar : "/Logo.png"}
+                          />
+                          <span className="text-sm">{user.name}</span>
+
+                          <X
+                            onClick={() =>
+                              setUserIds(
+                                userIds.filter((u) => u.id !== user.id)
+                              )
+                            }
+                            size={16}
+                            className="cursor-pointer ml-2"
+                          />
+                        </li>
+                      ))}
                   </ul>
                 </div>
               </div>
@@ -237,7 +378,7 @@ export default function AddNewTaskBtn() {
               disabled={isPending}
               className="w-full cursor-pointer h-[45px] px-4 py-2 text-white  rounded-md flex items-center justify-center mt-[55px]"
             >
-              <span>Save Changes</span>
+              <span>{isPending ? "Saving..." : "Save Changes"}</span>
             </Button>
           </form>
         </PopoverContent>
