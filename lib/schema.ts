@@ -37,19 +37,16 @@ export const editSchemawithID = z.object({
   ...Taskschema.omit({ remindme: true }).shape,
 });
 
-//FOR EDITING SINGLE TASK
-// export const editSchemawithID = z.object({
-//     id: z.string({ required_error: "ID is required" }).min(1),
-//     content: z.string({ message: "Content is required" }).min(1),
-//     duedate: z
-//       .date()
-//       .nullable()
-//       .optional()
-//       .refine((value) => (value ? value.getTime() >= dayjs().valueOf() : true), {
-//         message: "The Date should be in today or later",
-//         path: ["duedate"],
-//       }),
-//   });
+export const addListSchema = z.object({
+  list: z
+    .string({
+      required_error: "list name is required",
+      message: "list name is required",
+    })
+    .min(6)
+    .max(55),
+});
 
 export type FormData = z.infer<typeof Taskschema>;
+export type listFormData = z.infer<typeof addListSchema>;
 export type editFormData = z.infer<typeof editSchemawithID>;

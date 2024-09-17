@@ -44,7 +44,7 @@ export default function CollabTaskItems({
   const queryClient = new QueryClient();
 
   return (
-    <div className="mx-8 mt-10 max-h-[600px] mb-6 overflow-y-auto max-w-[680px]">
+    <div className="mx-8 mt-10 h-auto max-h-[600px] mb-6 overflow-y-auto max-w-[680px]">
       <ul className="flex flex-col gap-5">
         {!task ? (
           <p>Loading</p>

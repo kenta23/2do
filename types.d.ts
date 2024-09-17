@@ -23,6 +23,16 @@ export type CollabTasksType = {
   userId: string;
 };
 
+export type singleList = {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  tasks?: TaskType[];
+  collabTasks?: CollabTasksType[];
+};
+
 export type PendingTaskType = {
   id: string;
   userId: string;

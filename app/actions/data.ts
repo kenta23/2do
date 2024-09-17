@@ -10,7 +10,6 @@ import { editFormData, FormData } from "@/lib/schema";
 import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient().$extends(withAccelerate());
-
 const supabase = createClient();
 
 export async function createMyTask(
@@ -80,13 +79,30 @@ export async function createMyTask(
 
     if (newCollabTasks) {
       if (users && users.length > 0) {
-        await prisma.pendingTask.create({
-          data: {
-            status: "PENDING",
-            taskId: newCollabTasks.id,
-            userId: userFromDb.id,
-          },
+        const userIds = users.map((user) => user.id);
+
+        const foundUsers = await prisma.user.findMany({
+          where: { userId: { in: userIds } },
         });
+
+        if (foundUsers && foundUsers.length > 0) {
+          //if there are users found
+          const pendingTasks = foundUsers.map(
+            (
+              user //each user create a pending task
+            ) =>
+              prisma.pendingTask.create({
+                data: {
+                  status: "PENDING",
+                  taskId: newCollabTasks.id,
+                  userId: user.id, // Use user's ID here
+                },
+              })
+          );
+
+          // Wait for all pending tasks to be created
+          await Promise.all(pendingTasks);
+        }
       }
     }
 
@@ -320,6 +336,7 @@ export async function suggestedUsers(letter: string) {
           { email: { contains: letter, mode: "insensitive" } }, // Case-insensitive search
           { name: { contains: letter, mode: "insensitive" } },
         ],
+        AND: [{ userId: { not: user.data.user?.id } }],
       },
     });
 
@@ -328,4 +345,33 @@ export async function suggestedUsers(letter: string) {
     console.log(error);
     return [];
   }
+}
+
+export async function getPendingTasks() {
+  const user = await supabase.auth.getUser();
+  const prisma = new PrismaClient().$extends(withAccelerate());
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  //find user by id
+  const userFromDb = await prisma.user.findFirst({
+    select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+    where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+  });
+
+  const pendingtasks = await prisma.pendingTask.findMany({
+    where: {
+      userId: userFromDb?.id,
+    },
+    include: {
+      task: {
+        include: { owner: true },
+      },
+      user: true,
+    },
+  });
+
+  return pendingtasks;
 }

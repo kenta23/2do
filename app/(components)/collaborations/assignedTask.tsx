@@ -19,7 +19,7 @@ export default function AssignedTask({
   const pathName = usePathname();
 
   return (
-    <div className="relative max-h-[600px] h-full">
+    <div className=" h-auto ">
       {/* IF THERE IS EXISTED TASKS */}
       <CollabTaskItems task={tasks} users={users} />
     </div>

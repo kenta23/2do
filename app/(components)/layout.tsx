@@ -19,15 +19,17 @@ export default async function RootLayout({
   const { data, error } = await supabase.auth.getUser();
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
+    <div className="w-full h-full max-h-screen">
+      <div className="flex h-full min-h-screen max-h-screen">
+        <Sidebar />
 
-      <div className="w-full ">
-        <Search user={data.user as User} />
-        {children}
+        <div className="w-full h-full">
+          <Search user={data.user as User} />
+          {children}
+        </div>
       </div>
 
-      <div className="text-center w-full mx-auto flex justify-center align-bottom fixed bottom-3">
+      <div className="text-center place-self-end items-center ms-[228px] flex justify-center align-bottom sticky bottom-3">
         <AddNewTaskBtn />
       </div>
     </div>

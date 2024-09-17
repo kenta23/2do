@@ -13,7 +13,7 @@ export default function YourTasks({
   users: { name: string; id: string; avatar: string | null }[] | undefined;
 }) {
   return (
-    <div className="relative max-h-[600px] h-full">
+    <div className="h-auto">
       {/* IF THERE IS EXISTED TASKS */}
       <CollabTaskItems task={tasks} users={users} />
     </div>

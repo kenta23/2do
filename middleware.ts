@@ -1,12 +1,18 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/utils/supabase/middleware'
-
+import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/utils/supabase/middleware";
+import { createClient } from "./utils/supabase/server";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  if (request.nextUrl.pathname.startsWith("/sign-in")) {
+    const supabase = createClient();
+    const auth = await supabase.auth.getUser();
+
+    if (auth.data.user) {
+      return NextResponse.rewrite(new URL("/", request.url));
+    }
+  }
+  return await updateSession(request);
 }
-
-
 
 export const config = {
   matcher: [
@@ -16,6 +22,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-}
+};

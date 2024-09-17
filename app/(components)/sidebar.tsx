@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import AddNewList from "./addNewList";
+import Lists from "./lists";
 
 const listItems: Array<{
   id: number;
@@ -58,7 +60,7 @@ const listItems: Array<{
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <div className="w-[265px] border-r-[#F1D7B0] border-r py-2">
+    <div className="w-[265px] min-h-screen max-h-screen h-full border-r-[#F1D7B0] border-r py-2">
       {/* LOGO */}
       <div className="flex justify-center p-2 w-full text-center mx-auto">
         <Image
@@ -127,37 +129,13 @@ export default function Sidebar() {
 
         <div>
           {/* ADD NEW LIST BUTTON */}
+          <AddNewList />
+        </div>
 
-          <Dialog>
-            <DialogTrigger>
-              <div className="w-full mt-2 h-[45px] px-3 cursor-pointer text-[#8B4B1D] flex gap-2 items-center">
-                <Plus />
-                <p className="text-md">Add new list</p>
-              </div>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <h4>Add new list</h4>
-                <p className="text-sm font-light ">
-                  You can add list as many as you can
-                </p>
-              </DialogHeader>
-
-              <form action="" className="flex ">
-                <Input />
-              </form>
-
-              <DialogFooter>
-                <Button
-                  className="bg-primaryColor hover:bg-orange-300 duration-150 ease-linear transition-colors"
-                  type="submit"
-                >
-                  Save changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+        <hr className="w-full border-b-[1px]" />
+        {/* LISTS */}
+        <div>
+          <Lists />
         </div>
       </div>
     </div>

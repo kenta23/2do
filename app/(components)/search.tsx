@@ -11,6 +11,7 @@ import { Popover } from "@/components/ui/popover";
 import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
 import Image from "next/image";
 import { User } from "@/types";
+import Notifications from "./notifications";
 
 export default function Search({ user }: { user: User | null }) {
   const supabase = createClient();
@@ -24,7 +25,7 @@ export default function Search({ user }: { user: User | null }) {
   };
 
   return (
-    <div className="w-full  h-[70px] px-4 py-2">
+    <div className="w-full h-[70px] px-4 py-2">
       <nav className="w-full flex">
         <div className="w-auto text-center mx-auto relative">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -36,8 +37,9 @@ export default function Search({ user }: { user: User | null }) {
         </div>
 
         <ul className="flex items-center gap-3">
+          {/* NOTIFICATION */}
           <li>
-            <Bell />
+            <Notifications />
           </li>
 
           <li>

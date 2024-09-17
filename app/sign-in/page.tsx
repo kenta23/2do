@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use } from "react";
+import React, { use, useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { signInWithEmail } from "../actions/login";
@@ -9,6 +9,8 @@ import { createClient } from "@/utils/supabase/client";
 import { PrismaClient } from "@prisma/client";
 import { User } from "@/types";
 import { withAccelerate } from "@prisma/extension-accelerate";
+import { Metadata } from "next";
+import Link from "next/link";
 
 const initialState: any = {
   message: "",
@@ -19,6 +21,7 @@ export default function SignIn() {
   const [state, magicEmailAction] = useFormState(signInWithEmail, initialState);
   const { pending } = useFormStatus();
   const supabase = createClient();
+  const [emailOtp, setEmailOtp] = useState<boolean>(false);
 
   async function signInWithGithub() {
     try {
@@ -48,20 +51,21 @@ export default function SignIn() {
         <p className="text-md font-light">Please sign in to continue</p>
       </div>
 
-      <form className="btn space-y-4">
+      <form className="btn space-y-4 w-[320px] max-w-[370px]">
         {/* Email Magic Link */}
         <p aria-live="polite" className="text-red-500">
           {state?.message as string}
         </p>
         {state?.success && (
           <p className="text-green-500 transition-all duration-150">
-            Confirmation sent to your email.
+            Redirecting.....
           </p>
         )}
+
         <Input
-          placeholder="Enter your Email"
+          placeholder="Enter Email"
           type="email"
-          className="focus:border-primaryColor focus:border w-80 h-12"
+          className="focus:border-primaryColor focus:border w-full h-12"
           name="email"
         />
 
