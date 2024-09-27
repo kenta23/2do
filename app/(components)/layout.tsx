@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Sidebar from "./sidebar";
 import Search from "./search";
-import { getUser } from "@/utils/supabase/getUser";
-import { createClient } from "@/utils/supabase/server";
-import { User } from "@/types";
+import { AuthUser } from "@/types";
 import AddNewTaskBtn from "@/components/addNewTaskBtn";
+import { auth } from "@/auth";
+import { Session, User } from "next-auth";
 
 export const metadata: Metadata = {
   title: "2Do",
@@ -15,8 +15,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createClient();
-  const { data, error } = await supabase.auth.getUser();
+  const session: Session | null = await auth();
 
   return (
     <div className="w-full h-full max-h-screen">
@@ -24,7 +23,7 @@ export default async function RootLayout({
         <Sidebar />
 
         <div className="w-full h-full">
-          <Search user={data.user as User} />
+          <Search user={session?.user as User} />
           {children}
         </div>
       </div>

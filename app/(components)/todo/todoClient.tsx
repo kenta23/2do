@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 export default function TodoClient() {
   const pathName = usePathname();
   const { data, error, isSuccess } = useQuery({
-    queryKey: ["tasklist"],
+    queryKey: ["todolist"],
     queryFn: async () => await getTask(pathName),
   });
 

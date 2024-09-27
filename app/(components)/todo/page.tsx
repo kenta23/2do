@@ -1,19 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import {
-  Bell,
-  EllipsisVertical,
-  Pencil,
-  Plus,
-  Star,
-  Trash,
-} from "lucide-react";
-import AddNewTaskBtn from "@/components/addNewTaskBtn";
 import dateNow from "@/lib/date";
-import { createClient } from "@/utils/supabase/client";
-import { Popover } from "@/components/ui/popover";
-import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
-import TaskList from "@/components/TaskList";
 import TodoClient from "./todoClient";
 
 export default function page() {

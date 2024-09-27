@@ -1,19 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 import { createClient } from "./utils/supabase/server";
+import { request } from "http";
+import { auth } from "./auth";
 
-export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/sign-in")) {
-    const supabase = createClient();
-    const auth = await supabase.auth.getUser();
+export default auth((req) => {
+  const protectedRoutes = ["/todo", "/collaborations", "/planned", "/lists"];
+  const isProtected = protectedRoutes.some((route) =>
+    req.nextUrl.pathname.startsWith(route)
+  );
 
-    if (auth.data.user) {
-      return NextResponse.rewrite(new URL("/", request.url));
-    }
+  if (!req.auth?.user && isProtected) {
+    const newUrl = new URL("/sign-in", req.nextUrl.origin);
+    return NextResponse.redirect(newUrl);
   }
-  return await updateSession(request);
-}
 
+  if (req.auth?.user && req.nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/todo", req.nextUrl));
+  }
+});
 export const config = {
   matcher: [
     /*

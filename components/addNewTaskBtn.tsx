@@ -32,7 +32,7 @@ export default function AddNewTaskBtn() {
   const [text, setText] = useState<string>("");
   const [debouncedText] = useDebounce(text, 1000);
   const [userIds, setUserIds] = useState<
-    { id: string; avatar: string; name: string }[]
+    { id: string; image: string | null; name: string | null }[]
   >([]);
   const [displayUser, setDisplayUser] = useState<boolean>(false);
   const containerUsers = useRef<HTMLDivElement>(null);
@@ -121,7 +121,7 @@ export default function AddNewTaskBtn() {
       onSuccess: () => {
         console.log("SUCCESSFULLY SAVED DATA");
         queryClient.invalidateQueries({
-          queryKey: ["tasklist"],
+          queryKey: ["tasklist", "assignedTasks", "yourTasks"],
           stale: true,
         });
         resetValues();
@@ -307,9 +307,10 @@ export default function AddNewTaskBtn() {
                                 );
 
                                 if (alreadyIncludedUsers) return;
+
                                 const addUser = {
                                   id: user.id,
-                                  avatar: user.avatar as string | "/Logo.png",
+                                  image: user.image as string | "/Logo.png",
                                   name: user.name,
                                 };
                                 setUserIds((prevUsers) => [
@@ -328,7 +329,7 @@ export default function AddNewTaskBtn() {
                                 width={50}
                                 className="rounded-full"
                                 height={100}
-                                src={user.avatar ? user.avatar : "/Logo.png"}
+                                src={user.image ? user.image : "/Logo.png"}
                               />
                               <span className="text-sm">{user.name}</span>
                             </li>
@@ -353,7 +354,7 @@ export default function AddNewTaskBtn() {
                             width={35}
                             className="rounded-full"
                             height={100}
-                            src={user.avatar ? user.avatar : "/Logo.png"}
+                            src={user.image ?? "/Logo.png"}
                           />
                           <span className="text-sm">{user.name}</span>
 

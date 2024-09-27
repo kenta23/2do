@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import React from "react";
 import Listclient from "./listclient";
 import dateNow from "@/lib/date";
-import { createClient } from "@/utils/supabase/server";
+import { getSingleList } from "@/app/actions/lists";
 
 type paramsType = {
   params: {
@@ -37,20 +37,9 @@ export async function generateMetadata({
 }
 
 export default async function page({ params }: paramsType) {
-  const prisma = new PrismaClient().$extends(withAccelerate());
-  const supabase = createClient();
-  const auth = await supabase.auth.getUser();
   const decodedListName = decodeURIComponent(params.listname as string);
 
-  const data = await prisma.list.findFirst({
-    where: {
-      AND: [{ name: decodedListName }, { userId: auth.data.user?.id }],
-    },
-    include: {
-      collabTasks: true,
-      tasks: true,
-    },
-  });
+  const data = await getSingleList(decodedListName);
 
   return (
     <div className="bg-backgroundColor relative w-full overflow-x-hidden min-h-screen h-full py-8 px-4">

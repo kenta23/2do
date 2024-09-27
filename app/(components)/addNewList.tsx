@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 import { PrismaClient } from "@prisma/client";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,9 +21,6 @@ import { addList } from "../actions/lists";
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 
 export default function AddNewList() {
-  const supabase = createClient();
-  const auth = supabase.auth.getUser();
-
   const {
     data,
     error: mutationError,
@@ -63,7 +59,7 @@ export default function AddNewList() {
     mutate(validatedData.data, {
       onSuccess: () => {
         console.log("Successfully added new list");
-        queryClient.refetchQueries({
+        queryClient.invalidateQueries({
           exact: true,
           queryKey: ["lists"],
           type: "active",

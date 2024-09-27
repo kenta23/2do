@@ -1,10 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
-import Image from "next/image";
-import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 export default async function Home() {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getSession();
+  const user = await auth();
 
-  return data ? redirect("/todo") : redirect("/sign-in");
+  console.log("user", user);
+  return <h1>Hello world</h1>;
+  // return data ? redirect("/todo") : redirect("/sign-in");
 }

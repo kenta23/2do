@@ -8,13 +8,14 @@ import { getTask } from "@/app/actions/data";
 import Image from "next/image";
 import { CollabTasksType } from "@/types";
 import CollabTaskItems from "./collabTaskItems";
+import { basicInfoUser } from "./page";
 
 export default function AssignedTask({
   tasks,
   users,
 }: {
   tasks: CollabTasksType[] | undefined;
-  users: { name: string; id: string; avatar: string | null }[] | undefined;
+  users: basicInfoUser;
 }) {
   const pathName = usePathname();
 

@@ -2,43 +2,40 @@
 
 import { PrismaClient } from "@prisma/client/edge";
 import { z } from "zod";
-import { createClient } from "@/utils/supabase/server";
 import dayjs from "dayjs";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { NextRequest, NextResponse } from "next/server";
 import { editFormData, FormData } from "@/lib/schema";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 const prisma = new PrismaClient().$extends(withAccelerate());
-const supabase = createClient();
 
 export async function createMyTask(
   data: FormData,
   pathname: string,
   users:
     | {
-        name: string;
+        name: string | null;
         id: string;
-        userId: string;
         email: string | null;
-        avatar: string | null;
-        createdAt: Date;
-        updatedAt: Date;
+        emailVerified: Date | null;
+        image: string | null;
       }[]
     | undefined
 ) {
-  const user = await supabase.auth.getUser();
-  console.log("MY PATHNAME", pathname);
+  const user = await auth();
 
   // Find user by id
   const userFromDb = await prisma.user.findFirst({
     select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
-    where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+    where: { id: user?.user?.id }, // Assuming `userId` is the identifier
   });
 
   if (!userFromDb) {
     throw new Error("User not found, cannot create task");
   }
+
   const duedate = data.duedate;
   const remindme = data.remindme;
   let newData;
@@ -62,6 +59,12 @@ export async function createMyTask(
   if (pathname === "/collaborations") {
     //add the user id if the invited user accepted the task
     //const userIds = users?.map((user) => user.id);
+    const userIds = users?.map((user) => user.id);
+
+    const foundUsers = await prisma.user.findMany({
+      //find invited user first in the database
+      where: { id: { in: userIds } },
+    });
 
     const newCollabTasks = await prisma.collabTasks.create({
       data: {
@@ -75,37 +78,32 @@ export async function createMyTask(
       },
     });
 
-    console.log("USERS", users);
-
     if (newCollabTasks) {
       if (users && users.length > 0) {
         const userIds = users.map((user) => user.id);
 
         const foundUsers = await prisma.user.findMany({
-          where: { userId: { in: userIds } },
+          //find invited user first in the database
+          where: { id: { in: userIds } },
         });
 
         if (foundUsers && foundUsers.length > 0) {
           //if there are users found
-          const pendingTasks = foundUsers.map(
-            (
-              user //each user create a pending task
-            ) =>
-              prisma.pendingTask.create({
-                data: {
-                  status: "PENDING",
-                  taskId: newCollabTasks.id,
-                  userId: user.id, // Use user's ID here
-                },
-              })
+          //each user create a pending task
+          const pendingTasks = foundUsers.map((user) =>
+            prisma.pendingTask.create({
+              data: {
+                status: "PENDING",
+                taskId: newCollabTasks.id,
+                userId: user.id, // Use user's ID here
+              },
+            })
           );
-
           // Wait for all pending tasks to be created
           await Promise.all(pendingTasks);
         }
       }
     }
-
     console.log("NEW TASK SAVED", newCollabTasks);
     revalidatePath("/collaborations");
   }
@@ -113,12 +111,12 @@ export async function createMyTask(
 }
 
 export async function getTask(pathname: string) {
-  const user = await supabase.auth.getUser();
+  const session = await auth();
 
   console.log("my pathname in server", pathname);
 
   // Check if user is authenticated
-  if (!user.data.user) {
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
@@ -126,7 +124,7 @@ export async function getTask(pathname: string) {
     // Retrieve tasks for the authenticated user from Prisma
     const userFromDb = await prisma.user.findFirst({
       select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
-      where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+      where: { id: session.user.id }, // Assuming `userId` is the identifier
     });
 
     const data = await prisma.task.findMany({
@@ -141,18 +139,19 @@ export async function getTask(pathname: string) {
 }
 
 export async function editTask(data: editFormData, pathname: string) {
-  const user = await supabase.auth.getUser();
+  const session = await auth();
 
   // Check if user is authenticated
-  if (!user.data.user) {
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
-  console.log("rendered from server");
-
   try {
     const newData = await prisma.task.update({
-      where: { id: data.id },
+      where: {
+        id: data.id,
+        userId: session.user.id,
+      },
       data: {
         content: data.content,
         duedate:
@@ -161,8 +160,6 @@ export async function editTask(data: editFormData, pathname: string) {
             : null,
       },
     });
-
-    revalidatePath("/planned");
     return newData;
   } catch (error) {
     console.log(error);
@@ -171,16 +168,18 @@ export async function editTask(data: editFormData, pathname: string) {
 }
 
 export async function getSingleTask(taskId: string) {
-  const user = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (!user.data.user) {
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
   try {
     const data = await prisma.task.findFirst({
-      where: { id: taskId as string },
+      where: { id: taskId as string, userId: session.user.id },
     });
+
     return data;
   } catch (error) {
     console.log(error);
@@ -190,15 +189,15 @@ export async function getSingleTask(taskId: string) {
 
 //fetch important tasks
 export async function fetchImportantTasks() {
-  const user = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (!user.data.user) {
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
-
   try {
     const data = await prisma.task.findMany({
-      where: { important: true },
+      where: { important: true, userId: session.user.id },
     });
 
     return data;
@@ -209,15 +208,16 @@ export async function fetchImportantTasks() {
 
 //delete single task
 export async function deleteSingleTask(taskId: string) {
-  const user = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (!user.data.user) {
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
   try {
     const data = await prisma.task.delete({
-      where: { id: taskId as string },
+      where: { id: taskId as string, userId: session.user.id },
     });
 
     console.log("DELETED DATA");
@@ -231,15 +231,16 @@ export async function deleteSingleTask(taskId: string) {
 }
 
 export async function fetchPlannedTodos() {
-  const user = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (!user.data.user) {
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
   try {
     const data = await prisma.task.findMany({
-      where: { userId: user.data.user.id },
+      where: { userId: session.user.id },
     });
 
     revalidatePath("/planned");
@@ -251,8 +252,10 @@ export async function fetchPlannedTodos() {
 }
 
 export async function fetchYourTasksTodos() {
-  const user = await supabase.auth.getUser();
-  if (!user.data.user) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
@@ -260,7 +263,7 @@ export async function fetchYourTasksTodos() {
     //find user by id
     const userFromDb = await prisma.user.findFirst({
       select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
-      where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+      where: { id: session.user.id }, // Assuming `userId` is the identifier
     });
 
     const yourTasks = await prisma.collabTasks.findMany({
@@ -279,7 +282,7 @@ export async function fetchYourTasksTodos() {
           in: joinedUserIds,
         },
       },
-      select: { id: true, name: true, avatar: true },
+      select: { id: true, name: true, image: true },
     });
 
     return { yourTasks, users };
@@ -289,8 +292,10 @@ export async function fetchYourTasksTodos() {
 }
 
 export async function fetchAssignedTasks() {
-  const user = await supabase.auth.getUser();
-  if (!user.data.user) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
@@ -298,7 +303,7 @@ export async function fetchAssignedTasks() {
     //find user by id
     const userFromDb = await prisma.user.findFirst({
       select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
-      where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+      where: { id: session.user.id }, // Assuming `userId` is the identifier
     });
 
     if (!userFromDb) {
@@ -308,7 +313,7 @@ export async function fetchAssignedTasks() {
     const acceptedTasks = await prisma.collabTasks.findMany({
       where: {
         joinedUsers: {
-          has: user.data.user?.id,
+          has: session.user.id,
         },
       },
     });
@@ -320,8 +325,10 @@ export async function fetchAssignedTasks() {
 }
 
 export async function suggestedUsers(letter: string) {
-  const user = await supabase.auth.getUser();
-  if (!user.data.user) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
@@ -336,7 +343,7 @@ export async function suggestedUsers(letter: string) {
           { email: { contains: letter, mode: "insensitive" } }, // Case-insensitive search
           { name: { contains: letter, mode: "insensitive" } },
         ],
-        AND: [{ userId: { not: user.data.user?.id } }],
+        AND: [{ id: { not: session.user.id } }],
       },
     });
 
@@ -348,30 +355,136 @@ export async function suggestedUsers(letter: string) {
 }
 
 export async function getPendingTasks() {
-  const user = await supabase.auth.getUser();
-  const prisma = new PrismaClient().$extends(withAccelerate());
+  const session = await auth();
 
-  if (!user.data.user) {
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
   //find user by id
   const userFromDb = await prisma.user.findFirst({
     select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
-    where: { userId: user.data.user?.id }, // Assuming `userId` is the identifier
+    where: { id: session.user.id }, // Assuming `userId` is the identifier
   });
 
-  const pendingtasks = await prisma.pendingTask.findMany({
+  // const pendingtasks = await prisma.pendingTask.findMany({
+  //   where: {
+  //     userId: userFromDb?.id,
+  //     status: "PENDING",
+  //   },
+  //   include: {
+  //     task: {
+  //       include: {
+  //         owner: true,
+  //         lists: true,
+  //       },
+  //     },
+  //     user: true,
+  //   },
+  // });
+  const pendingTasks = await prisma.pendingTask.findMany({
     where: {
       userId: userFromDb?.id,
+      status: "PENDING",
     },
+
     include: {
-      task: {
-        include: { owner: true },
+      collabTasks: {
+        include: {
+          owner: true,
+        },
       },
-      user: true,
+    },
+  });
+  const countViewedTasks = await prisma.pendingTask.count({
+    where: {
+      userId: userFromDb?.id,
+      status: "PENDING",
+      viewed: false,
     },
   });
 
-  return pendingtasks;
+  console.log(pendingTasks);
+
+  return { pendingTasks, countViewedTasks };
+}
+
+export async function viewedNotifications(taskId: string) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  //find user by id
+  const userFromDb = await prisma.user.findFirst({
+    select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+    where: { id: session.user.id }, // Assuming `userId` is the identifier
+  });
+
+  try {
+    const data = await prisma.pendingTask.update({
+      //find first the single task id
+      where: {
+        id: taskId,
+        userId: userFromDb?.id,
+        viewed: false,
+      },
+      data: {
+        viewed: true, //update the status, and add user to the joinedUsers from collaboration task
+      },
+    });
+
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+  return;
+}
+
+export async function acceptedTask(id: string) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  //find user by id
+  const userFromDb = await prisma.user.findFirst({
+    select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+    where: { id: session.user.id }, // Assuming `userId` is the identifier
+  });
+
+  try {
+    const data = await prisma.pendingTask.update({
+      //find first the single task id
+      where: {
+        id,
+        userId: userFromDb?.id,
+        viewed: false,
+      },
+      data: {
+        status: "ACCEPTED", //update the status, and add user to the joinedUsers from collaboration task
+        collabTasks: {
+          update: {
+            where: { id },
+            data: {
+              joinedUsers: {
+                push: userFromDb?.id,
+              },
+            },
+          },
+        },
+      },
+    });
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+
+  revalidatePath("/");
+  return;
 }

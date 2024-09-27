@@ -8,17 +8,60 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
 model User {
-  id           String        @id @default(cuid())
-  name         String
-  userId       String
-  email        String?       @unique
-  avatar       String?
-  collabTasks  CollabTasks[]
-  pendingTasks PendingTask[] @relation("pendingTasks")
-  myTasks      Task[]        @relation("owner")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @default(now()) @updatedAt
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  Task        Task[]        @relation("owner")
+  CollabTasks CollabTasks[]
+  PendingTask PendingTask[] @relation("pendingTasks")
+  List        List[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
 }
 
 model Task {
@@ -43,33 +86,36 @@ model List {
   updatedAt   DateTime      @default(now()) @updatedAt
   collabTasks CollabTasks[] @relation("CollabTasksToList")
   tasks       Task[]        @relation("ListToTask")
+  user        User          @relation(fields: [userId], references: [id])
 }
 
 model CollabTasks {
-  id           String        @id @default(cuid())
-  content      String
-  important    Boolean       @default(false)
-  remind_me    DateTime?
-  completed    Boolean       @default(false)
-  joinedUsers  String[]
-  duedate      DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @default(now()) @updatedAt
-  userId       String
+  id          String    @id @default(cuid())
+  content     String
+  important   Boolean   @default(false)
+  remind_me   DateTime?
+  completed   Boolean   @default(false)
+  joinedUsers String[]
+  duedate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  userId      String
+
   owner        User          @relation(fields: [userId], references: [id])
   lists        List[]        @relation("CollabTasksToList")
-  pendingTasks PendingTask[] @relation("PendingCollabTasks")
+  pendingTasks PendingTask[]
 }
 
 model PendingTask {
-  id        String       @id @default(cuid())
-  userId    String
-  taskId    String
-  status    CollabStatus @default(PENDING)
-  user      User         @relation("pendingTasks", fields: [userId], references: [id])
-  task      CollabTasks  @relation("PendingCollabTasks", fields: [taskId], references: [id])
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @default(now()) @updatedAt
+  id          String       @id @default(cuid())
+  userId      String
+  taskId      String
+  viewed      Boolean      @default(false)
+  status      CollabStatus @default(PENDING)
+  user        User         @relation("pendingTasks", fields: [userId], references: [id])
+  collabTasks CollabTasks  @relation(fields: [taskId], references: [id]) // Reference a single task
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
 }
 
 enum CollabStatus {

@@ -4,6 +4,9 @@ import "./globals.css";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import ProviderLocal from "@/components/LocalizationProvider";
+import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
+import Store from "@/providers/Store";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,17 +15,22 @@ export const metadata: Metadata = {
   description: "Todo list app",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ReactQueryProvider>
-          <ProviderLocal>{children}</ProviderLocal>
-        </ReactQueryProvider>
+        <Store>
+          <ReactQueryProvider>
+            <ProviderLocal>
+              <SessionProvider session={session}>{children}</SessionProvider>
+            </ProviderLocal>
+          </ReactQueryProvider>
+        </Store>
       </body>
     </html>
   );

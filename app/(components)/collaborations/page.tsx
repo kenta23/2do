@@ -12,13 +12,17 @@ export const metadata: Metadata = {
   description: "your tasks and assigned tasks",
 };
 
+export type basicInfoUser =
+  | { id: string; name: string | null; image: string | null }[]
+  | undefined;
+
 export default async function page() {
   const tasks = await fetchYourTasksTodos();
   const assignedTasks = await fetchAssignedTasks();
 
   return (
-    <div className="h-full max-h-screen overflow-y-auto">
-      <div className="bg-backgroundColor relative w-full h-full overflow-x-hidden max-h-auto overflow-y-hidden py-8 px-4">
+    <div className="h-full min-h-screen max-h-screen overflow-y-auto">
+      <div className="bg-backgroundColor relative w-full h-full min-h-screen overflow-x-hidden max-h-auto overflow-y-hidden py-8 px-4">
         <header className="mx-8">
           <h2 className="text-2xl font-medium">Your Tasks</h2>
           <p>{dateNow()}</p>
@@ -53,7 +57,7 @@ export default async function page() {
 
             <YourTasks tasks={tasks?.yourTasks} users={tasks?.users} />
 
-            <header className="mx-8">
+            <header className="mx-8 mt-10">
               <h2 className="text-2xl font-medium">Assigned Tasks</h2>
               <p>{dateNow()}</p>
             </header>

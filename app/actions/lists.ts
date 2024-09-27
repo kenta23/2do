@@ -2,7 +2,6 @@
 
 import { PrismaClient } from "@prisma/client/edge";
 import { z } from "zod";
-import { createClient } from "@/utils/supabase/server";
 import dayjs from "dayjs";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,15 +13,18 @@ import {
 } from "@/lib/schema";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { auth } from "@/auth";
 
 const prisma = new PrismaClient().$extends(withAccelerate());
-const supabase = createClient();
 
 export async function addList(data: listFormData) {
-  const user = await supabase.auth.getUser();
-  if (!user.data.user) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
+
   const newHeaders = headers();
   const referer = new URL(newHeaders.get("referer") || "").pathname;
 
@@ -31,7 +33,7 @@ export async function addList(data: listFormData) {
   const newlist = await prisma.list.create({
     data: {
       name: data.list,
-      userId: user.data.user.id,
+      userId: session.user.id as string,
     },
   });
 
@@ -42,14 +44,16 @@ export async function addList(data: listFormData) {
 }
 
 export async function getLists() {
-  const user = await supabase.auth.getUser();
-  if (!user.data.user) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
     throw new Error("User not authenticated");
   }
 
   const data = await prisma.list.findMany({
     where: {
-      userId: user.data.user.id,
+      userId: session.user.id,
     },
     include: {
       collabTasks: true,
@@ -58,4 +62,29 @@ export async function getLists() {
   });
 
   return data;
+}
+
+export async function getSingleList(decodedListName: string) {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const data = await prisma.list.findFirst({
+      where: {
+        AND: [{ name: decodedListName }, { userId: session.user.id }],
+      },
+      include: {
+        collabTasks: true,
+        tasks: true,
+      },
+    });
+
+    return data;
+  } catch (error) {
+    console.log(error);
+    return;
+  }
 }

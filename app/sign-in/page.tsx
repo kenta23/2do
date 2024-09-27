@@ -1,39 +1,24 @@
-"use client";
-
 import React, { use, useState } from "react";
 import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import { signInWithEmail } from "../actions/login";
-import { useFormState, useFormStatus } from "react-dom";
-import { createClient } from "@/utils/supabase/client";
-import { PrismaClient } from "@prisma/client";
-import { User } from "@/types";
-import { withAccelerate } from "@prisma/extension-accelerate";
 import { Metadata } from "next";
-import Link from "next/link";
+import { providerMap, signIn, signOut } from "@/auth";
+import { auth } from "@/auth";
+import { AuthError } from "next-auth";
 
 const initialState: any = {
   message: "",
   success: "",
 };
 
-export default function SignIn() {
-  const [state, magicEmailAction] = useFormState(signInWithEmail, initialState);
-  const { pending } = useFormStatus();
-  const supabase = createClient();
-  const [emailOtp, setEmailOtp] = useState<boolean>(false);
+export default async function SignIn(props: {
+  searchParams: { callbackUrl: string | undefined };
+}) {
+  const user = await auth();
 
-  async function signInWithGithub() {
-    try {
-      const user = await supabase.auth.signInWithOAuth({
-        provider: "github",
-        options: {
-          redirectTo: "http://localhost:3000/auth/callback",
-        },
-      });
-    } catch (error) {
-      console.log(error);
-    }
+  console.log("user", user);
+
+  async function logout() {
+    await signOut();
   }
 
   return (
@@ -51,51 +36,51 @@ export default function SignIn() {
         <p className="text-md font-light">Please sign in to continue</p>
       </div>
 
-      <form className="btn space-y-4 w-[320px] max-w-[370px]">
-        {/* Email Magic Link */}
-        <p aria-live="polite" className="text-red-500">
-          {state?.message as string}
-        </p>
-        {state?.success && (
-          <p className="text-green-500 transition-all duration-150">
-            Redirecting.....
-          </p>
-        )}
-
-        <Input
-          placeholder="Enter Email"
-          type="email"
-          className="focus:border-primaryColor focus:border w-full h-12"
-          name="email"
-        />
-
-        <button
-          formAction={magicEmailAction}
-          disabled={pending}
-          className=" w-full gap-3 items-center rounded-full px-3 border bg-secondaryColor active:bg-blue-500 text-white h-12"
+      {Object.values(providerMap).map((provider) => (
+        <form
+          key={provider.id}
+          action={async () => {
+            "use server";
+            try {
+              await signIn(provider.id, {
+                redirectTo: props.searchParams?.callbackUrl ?? "",
+              });
+            } catch (error) {
+              if (error instanceof AuthError) {
+                console.log(error.type);
+              }
+              throw error;
+            }
+          }}
         >
-          {pending ? (
-            <span>Signing in....</span>
-          ) : (
-            <span className="text-center">Sign in</span>
-          )}
-        </button>
+          <button
+            className="flex items-center justify-center hover:bg-gray-200 duration-150 transition-all ease-in-out shadow-md gap-2 rounded-full border border-gray-600 px-3 w-full h-12"
+            type="submit"
+          >
+            <Image
+              width={25}
+              height={200}
+              alt="github logo"
+              quality={100}
+              src={provider.name === "GitHub" ? "/github.png" : "/google.png"}
+            />
+            <span className="text-center">Sign in with {provider.name}</span>
+          </button>
+        </form>
+      ))}
 
-        <hr className="w-full" />
-
-        <button
-          onClick={signInWithGithub}
-          type="button"
-          className="flex items-center justify-center hover:bg-gray-200 duration-150 transition-all ease-in-out shadow-md gap-2 rounded-full border border-gray-600 px-3 w-full h-12"
-        >
-          <Image
-            width={25}
-            height={200}
-            alt="github logo"
-            quality={100}
-            src={"/github.png"}
-          />
-          <span className="text-center">Sign in with Github</span>
+      <form
+        action={async () => {
+          "use server";
+          try {
+            await signOut();
+          } catch (error) {
+            console.log(error);
+          }
+        }}
+      >
+        <button type="submit" className="cursor-pointer">
+          Logout
         </button>
       </form>
     </div>

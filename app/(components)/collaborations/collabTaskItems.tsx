@@ -33,13 +33,14 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
+import { basicInfoUser } from "./page";
 
 export default function CollabTaskItems({
   task,
   users,
 }: {
   task: CollabTasksType[] | undefined;
-  users: { name: string; id: string; avatar: string | null }[] | undefined;
+  users: basicInfoUser;
 }) {
   const queryClient = new QueryClient();
 
@@ -71,7 +72,7 @@ export default function CollabTaskItems({
                     {users?.map((user) => (
                       <Image
                         key={user.id}
-                        src={user.avatar ?? "/Logo.png"}
+                        src={user.image ?? "/Logo.png"}
                         alt="user avatar"
                         width={30}
                         height={100}

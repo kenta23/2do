@@ -43,7 +43,7 @@ export default function TaskItem({ task }: { task: TaskType }) {
 
         //refetch data
         queryClient.invalidateQueries({
-          queryKey: ["tasklist", "singleTask", id],
+          queryKey: ["todolist", "singleTask", id],
           exact: true,
           type: "active",
         });

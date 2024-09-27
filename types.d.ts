@@ -31,6 +31,7 @@ export type singleList = {
   updatedAt: Date;
   tasks?: TaskType[];
   collabTasks?: CollabTasksType[];
+  user?: User;
 };
 
 export type PendingTaskType = {
@@ -84,3 +85,17 @@ export type User = {
   updated_at: string;
   is_anonymous: boolean;
 };
+
+export interface AuthUser {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    emailVerified: string | null;
+    image: string;
+  };
+  id: string;
+  sessionToken: string;
+  userId: string;
+  expires: string;
+}

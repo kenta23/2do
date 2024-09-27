@@ -4,3 +4,5 @@ Todo:
   ☐ database migration
   ☐ fix bug on sign in when user already signed in, it can't redirect to / or /todo 
   ☐ complete all functions before doing the page responsive
+  ☐ advance querying the data in sidebar lists 
+  ☐ add sign in error page 
