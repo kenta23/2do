@@ -2,7 +2,12 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { set, z } from "zod";
@@ -12,12 +17,15 @@ import { Button } from "./ui/button";
 import { editTask, getSingleTask } from "@/app/actions/data";
 import { usePathname } from "next/navigation";
 import { editFormData, editSchemawithID } from "@/lib/schema";
+import { TaskType } from "@/types";
+import { TaskOrCollabTask } from "./TaskList";
 
 export default function EditTaskPopover({ taskId }: { taskId: string }) {
   const { data: taskValue } = useQuery({
     queryKey: ["singleTask", taskId],
     queryFn: () => getSingleTask(taskId),
   });
+
   const dueDate = dayjs(taskValue?.duedate);
 
   const {
@@ -37,7 +45,7 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     },
   });
 
-  const queryClient = new QueryClient();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [listFiles, setListFiles] = useState<File[] | null>([]);
   const [storeDueDate, setStoreDueDate] = useState<Date | Dayjs | null>(null);
@@ -73,14 +81,58 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
   //api call for post request to server
   const {
     data,
-    error,
+    error: editError,
     mutate,
     isPending,
     isSuccess,
     reset: mutateReset,
+    variables,
   } = useMutation({
+    mutationKey: ["editTodo"],
     mutationFn: async (data: z.infer<typeof editSchemawithID>) =>
       await editTask(data, pathName),
+    onMutate: async (newTodo) => {
+      await queryClient.cancelQueries({ queryKey: ["todos"] }); // Cancel ongoing todos refetch
+
+      //snapshot the previouse items for rolling back incase of mutation error
+      const previousTodos = queryClient.getQueryData(["todos"]); // Get current todos
+      const previousSingleTask = queryClient.getQueryData([
+        "singleTask",
+        newTodo.id,
+      ]);
+
+      // Optimistically update the "todos" and "singleTask" cache
+      if (previousTodos) {
+        queryClient.setQueryData(["todos"], (oldTodos: TaskOrCollabTask[]) => {
+          return oldTodos.map((todo) =>
+            todo.id === newTodo.id ? { ...todo, ...newTodo } : todo
+          );
+        });
+        queryClient.setQueryData(
+          ["singleTask", newTodo.id], // Match the "singleTask" query with the newTodo.id
+          (oldTask: TaskType | undefined) =>
+            oldTask ? { ...oldTask, ...newTodo } : newTodo // Update the single task optimistically
+        );
+      }
+
+      return { previousTodos, previousSingleTask }; // Return the previous state in case we need to roll back
+    },
+    // If the mutation fails, use the context we returned above
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(["todos"], context?.previousTodos); // Rollback on error
+      queryClient.setQueryData(
+        ["singleTask", newTodo.id],
+        context?.previousSingleTask
+      );
+    },
+    onSettled: async (newTodo) => {
+      queryClient.invalidateQueries({
+        queryKey: ["todos", "assignedTasks", "yourTasks"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["singleTask", taskId], // Refetch the single task with the specific ID
+      });
+    },
   });
 
   console.log("ERRORS", errors);
@@ -103,15 +155,14 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
       mutate(validatedData.data, {
         onSuccess: () => {
           console.log("SUCCESSFULLY SAVED DATA", data);
-          queryClient.invalidateQueries({
-            queryKey: ["tasklist"],
-            exact: true,
-            type: "active",
-          });
-          reset();
+
+          setTimeout(() => {
+            mutateReset();
+            reset();
+          }, 2000);
         },
-        onError: () => {
-          console.log("Error updating data");
+        onError: (error) => {
+          console.log("Error updating data", error);
         },
       });
     } catch (error) {
@@ -138,9 +189,8 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
 
   return (
     <form className="h-full w-full" onSubmit={submit(submitData)}>
-      {isSuccess && (
-        <p className="text-green-500 text-sm">Successfully Edited Task</p>
-      )}
+      {isSuccess && <p className="text-green-500">Successfully Edited task</p>}
+      {editError && <p className="text-red-500">Error Editing task</p>}
       <div className="flex h-full mt-[10px] gap-3 items-start flex-col w-full ">
         <input
           type="text"
@@ -226,6 +276,12 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
       >
         <span>Save Changes</span>
       </Button>
+      {editError && (
+        <li style={{ color: "red" }}>
+          {variables.content}
+          <button onClick={() => mutate(variables)}>Retry</button>
+        </li>
+      )}
     </form>
   );
 }

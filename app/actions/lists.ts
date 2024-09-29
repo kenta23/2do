@@ -77,14 +77,118 @@ export async function getSingleList(decodedListName: string) {
         AND: [{ name: decodedListName }, { userId: session.user.id }],
       },
       include: {
-        collabTasks: true,
+        collabTasks: {
+          where: {
+            lists: {
+              some: {
+                name: decodedListName,
+              },
+            },
+          },
+          include: {
+            owner: true,
+            pendingTasks: true,
+          },
+        },
         tasks: true,
+        //follow other tasks type
       },
     });
 
-    return data;
+    //from other user tasks
+    const acceptedTasks = await prisma.collabTasks.findMany({
+      where: {
+        joinedUsers: {
+          has: session.user.id,
+        },
+      },
+    });
+
+    const joinedUserIds = data?.collabTasks.flatMap(
+      (user) => user.joinedUsers || []
+    );
+
+    const users = await prisma.user.findMany({
+      where: {
+        id: { in: joinedUserIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+      },
+    });
+
+    return { data, users, acceptedTasks };
   } catch (error) {
     console.log(error);
     return;
   }
+}
+
+export async function addOrDetachListFromTask({
+  taskId,
+  listID,
+}: {
+  taskId: string;
+  listID: string;
+}) {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    //find the list with the exact task
+    const list = await prisma.list.findFirst({
+      where: {
+        id: listID,
+        tasks: {
+          some: {
+            id: taskId,
+          },
+        },
+      },
+    });
+
+    let data;
+
+    //if the list exist already
+    if (list?.id) {
+      data = await prisma.task.update({
+        where: {
+          id: taskId,
+          userId: session.user.id,
+        },
+        data: {
+          list: {
+            disconnect: {
+              id: listID,
+            },
+          },
+        },
+      });
+    } else {
+      data = await prisma.task.update({
+        where: {
+          id: taskId,
+          userId: session.user.id,
+        },
+        data: {
+          list: {
+            connect: {
+              id: listID,
+            },
+          },
+        },
+      });
+    }
+
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+
+  throw new Error("error");
 }

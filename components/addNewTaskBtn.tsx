@@ -20,6 +20,7 @@ import { Input } from "./ui/input";
 import Link from "next/link";
 import Image from "next/image";
 import { useDebounce } from "use-debounce";
+import { TaskType } from "@/types";
 
 export default function AddNewTaskBtn() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +105,31 @@ export default function AddNewTaskBtn() {
   } = useMutation({
     mutationFn: async (datas: FormData) =>
       await createMyTask(datas, pathname, users),
+    mutationKey: ["addNewTodo"],
+    onMutate: async (newTodo) => {
+      await queryClient.cancelQueries({ queryKey: ["todos"] });
+
+      //snapshot the prev value
+      const previousTodos = queryClient.getQueryData(["todos"]);
+
+      // Optimistically update to the new value
+      if (previousTodos) {
+        queryClient.setQueryData(["todos"], (old: TaskType[]) => [
+          ...old,
+          newTodo,
+        ]);
+      }
+      // Return a context object with the snapshotted value
+      return { previousTodos };
+    },
+    onError: (error, variables, context) => {
+      queryClient.setQueryData(["todos"], context?.previousTodos);
+    },
+    onSettled: (newTodo) => {
+      queryClient.invalidateQueries({
+        queryKey: ["todos", "assignedTasks", "yourTasks"],
+      });
+    },
   });
 
   const onSubmit: SubmitHandler<FormData> = (data: FormData) => {
@@ -116,14 +142,9 @@ export default function AddNewTaskBtn() {
 
       return;
     }
-
     mutate(result.data, {
       onSuccess: () => {
         console.log("SUCCESSFULLY SAVED DATA");
-        queryClient.invalidateQueries({
-          queryKey: ["tasklist", "assignedTasks", "yourTasks"],
-          stale: true,
-        });
         resetValues();
         setUserIds([]);
 

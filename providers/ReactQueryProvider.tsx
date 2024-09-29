@@ -1,4 +1,9 @@
-import { fetchAssignedTasks, fetchYourTasksTodos, getPendingTasks, getTask } from "@/app/actions/data";
+import {
+  fetchAssignedTasks,
+  fetchYourTasksTodos,
+  getPendingTasks,
+  getTask,
+} from "@/app/actions/data";
 import { getLists } from "@/app/actions/lists";
 import {
   QueryClient,
@@ -13,7 +18,7 @@ export default async function ReactQueryProvider({
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 3 * 60 * 1000, // this sets the cache time to 5 minutes
+        staleTime: 3 * 60 * 1000, // this sets the cache time to 3 minutes
         gcTime: 2 * 2000,
       },
     },
@@ -26,21 +31,21 @@ export default async function ReactQueryProvider({
       queryFn: async () => await getLists(),
     }),
     queryClient.prefetchQuery({
-      queryKey: ["todolist"],
+      queryKey: ["todos"],
       queryFn: async () => await getTask("/todo"),
     }),
     queryClient.prefetchQuery({
       queryKey: ["pendings"],
       queryFn: async () => await getPendingTasks(),
     }),
-    queryClient.prefetchQuery( { 
-        queryKey: ['assignedTasks'],
-        queryFn: async () => await fetchYourTasksTodos()
+    queryClient.prefetchQuery({
+      queryKey: ["assignedTasks"],
+      queryFn: async () => await fetchYourTasksTodos(),
     }),
     queryClient.prefetchQuery({
-       queryKey: ['yourTasks'],
-       queryFn: async () => await fetchAssignedTasks(),
-    })
+      queryKey: ["yourTasks"],
+      queryFn: async () => await fetchAssignedTasks(),
+    }),
   ]);
 
   return (

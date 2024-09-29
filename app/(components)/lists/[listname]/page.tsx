@@ -41,14 +41,15 @@ export default async function page({ params }: paramsType) {
 
   const data = await getSingleList(decodedListName);
 
+  console.log("list viewed", data);
   return (
     <div className="bg-backgroundColor relative w-full overflow-x-hidden min-h-screen h-full py-8 px-4">
-      <header className="mx-8">
-        <h2 className="text-2xl font-medium">{data?.name}</h2>
-        <p>{dateNow()}</p>
-      </header>
-
-      <Listclient list={data} />
+      <Listclient
+        listName={decodedListName}
+        list={data?.data}
+        users={data?.users}
+        acceptedTasks={data?.acceptedTasks}
+      />
     </div>
   );
 }
