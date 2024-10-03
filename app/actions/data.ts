@@ -135,16 +135,25 @@ export async function getTask(pathname: string) {
           userId: userFromDb?.id, // Filter by userId, not id
         },
       });
-    } else {
-      data = await prisma.task.findMany({
-        where: {
-          userId: userFromDb?.id, // Filter by userId, not id
-        },
-        // cacheStrategy: {
-        //   ttl: 40,
-        //   swr: 60,
-        // },
-      });
+    } 
+    else {
+      if(pathname === '/important') { 
+
+        data = await prisma.task.findMany({
+          where: {
+            userId: userFromDb?.id, // Filter by userId, not id
+            important: true,
+          },
+        });
+      }
+        else { 
+          data = await prisma.task.findMany({
+            where: {
+              userId: userFromDb?.id, // Filter by userId, not id
+            },
+          });
+        }
+     
     }
 
     return data;

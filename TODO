@@ -7,4 +7,5 @@ Todo:
   ☐ advance querying the data in sidebar lists 
   ☐ add sign in error page 
   ✔ fix the deletTask function cant import to client component @done(24-10-02 21:31)
-  ☐ fix the addlistoption validation
+  ☐ fix the addlistoption validation 
+  ☐ fix add task to list 

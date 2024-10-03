@@ -1,5 +1,6 @@
 import { deleteSingleTask, getTask } from "@/app/actions/data";
-import { getLists } from "@/app/actions/lists";
+import { markAsImportant } from "@/app/actions/important";
+import { checkIsInListQuery, getLists, IsInList } from "@/app/actions/lists";
 import { TaskOrCollabTask, TaskType } from "@/types";
 import {
   QueryClient,
@@ -10,10 +11,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-export function useTaskListQuery(open: boolean) {
+export function useTaskListQuery(open: boolean, taskId: string) {
   return useQuery({
     queryKey: ["tasklists"],
-    queryFn: async () => await getLists(),
+    queryFn: async () => await checkIsInListQuery(taskId),
     enabled: open,
   });
 }
@@ -22,9 +23,8 @@ export function useTaskListQuery(open: boolean) {
 export function useTasksQuery(querykey: string, pathname: string) {
   return useQuery({
     queryKey: [querykey],
-    staleTime: 2 * 1000 * 60, //2 minutes stale time
-    gcTime: 2 * 1000 * 60, //2 minutes
     queryFn: async () => await getTask(pathname),
+    refetchOnMount: true,
   });
 }
 
@@ -91,4 +91,19 @@ export const deleteTask = (
   } catch (error) {
     console.log(error);
   }
+};
+
+export const useFindListQuery = async (listId: string, taskId: string) => {
+  return useQuery({
+    queryFn: async () => await IsInList(listId, taskId),
+    queryKey: ["isInList", listId],
+  });
+};
+
+export const useImportantTaskToggle = (id: string, pathname: string) => {
+  return useMutation({
+    mutationFn: async (taskId: string) =>
+      await markAsImportant(taskId, pathname),
+    mutationKey: ["importantMutation"],
+  });
 };

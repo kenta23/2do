@@ -126,6 +126,7 @@ export default function TaskItem({
               deleteTask(task.id, deleteMutation, querykey, queryClient)
             }
             querykey={querykey}
+            pathname={pathname}
             taskId={task.id}
           />
         </div>

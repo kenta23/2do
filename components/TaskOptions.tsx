@@ -8,7 +8,7 @@ import {
   Star,
   Trash,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import AddListPopover from "./addListPopover";
 import { listStyles } from "./TaskList";
@@ -24,24 +24,62 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
-import { useQueryClient } from "@tanstack/react-query";
-import { useTaskListQuery } from "@/lib/queries";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useImportantTaskToggle, useTaskListQuery } from "@/lib/queries";
+import { isTaskImportant, markAsImportant } from "@/app/actions/important";
 
 export default function TaskOptions({
   taskId,
   deleteTask,
   querykey,
+  pathname,
 }: {
   taskId: string;
   deleteTask: (id: string) => void;
+  pathname: string;
   querykey: string;
 }) {
   const [open, setOpen] = useState<boolean>(false);
+
   const queryClient = useQueryClient();
-  const { data: queryLists } = useTaskListQuery(open);
+  const { data: queryLists, refetch } = useTaskListQuery(open, taskId);
+
+  const { data: IsInImportant, refetch: refetchImportant } = useQuery({
+    queryFn: async () => await isTaskImportant(taskId, pathname),
+    queryKey: ["important", taskId],
+    enabled: open,
+  });
+
+  const { mutate: mutateTask, reset } = useImportantTaskToggle(
+    taskId,
+    pathname
+  );
+
+  useEffect(() => {
+    if (open) {
+      refetch();
+      refetchImportant();
+    }
+  }, [open, refetch, refetchImportant]);
+
+  function handleImportantTasks(id: string) {
+    mutateTask(id, {
+      onSettled: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["tasklists"],
+          type: "active",
+        });
+
+        refetchImportant();
+      },
+      onError: (error) => {
+        console.log(error);
+      },
+    });
+  }
 
   return (
-    <Popover>
+    <Popover onOpenChange={() => setOpen((prev) => !prev)} open={open}>
       <PopoverTrigger asChild>
         <EllipsisVertical
           onClick={async () =>
@@ -110,16 +148,31 @@ export default function TaskOptions({
               </AlertDialog>
             </li>
 
-            <li className={listStyles}>
-              <Star size={22} />
-              <p>Mark as Important</p>
+            <li
+              className={listStyles}
+              onClick={() => handleImportantTasks(taskId)}
+            >
+              <Star
+                fill={IsInImportant?.important === true ? "#eec043" : "none"} // Use "none" when not important
+                stroke={
+                  IsInImportant?.important === true ? "#eec043" : "currentColor"
+                } // Stroke for the border
+                className={`${
+                  IsInImportant?.important === true ? "text-[#eec043]" : ""
+                }`}
+                size={22}
+              />
+              <p
+                className={`${
+                  IsInImportant?.important === true ? "text-[#eec043]" : ""
+                }`}
+              >
+                Mark as Important
+              </p>
             </li>
 
             <li className={listStyles}>
-              <Popover
-                onOpenChange={() => setOpen((prev) => !prev)}
-                open={open}
-              >
+              <Popover>
                 <PopoverTrigger className="w-full border-none outline-none">
                   <div className="flex gap-2">
                     <Plus size={22} />
@@ -134,7 +187,8 @@ export default function TaskOptions({
                   className="w-full"
                 >
                   <AddListPopover
-                    lists={queryLists}
+                    lists={queryLists?.data}
+                    alreadyInList={queryLists?.alreadyInList}
                     taskID={taskId}
                     setOpen={setOpen}
                   />

@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { addOrDetachListFromTask, IsInList } from "@/app/actions/lists";
+import { useFindListQuery } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { singleList } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,10 +13,12 @@ import React from "react";
 export default function AddListPopover({
   lists,
   setOpen,
+  alreadyInList,
   taskID,
 }: {
   lists: singleList[] | undefined;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  alreadyInList: (string | null)[] | undefined;
   taskID: string;
 }) {
   const pathname = usePathname();
@@ -34,19 +38,9 @@ export default function AddListPopover({
         exact: true,
         type: "active",
       });
-
-      queryClient.invalidateQueries({
-        queryKey: ["isInList"],
-        exact: true,
-        type: "active",
-      });
     },
   });
 
-  const { data: isinlist } = useQuery({
-    queryFn: async () => await IsInList(taskID, pathname),
-    queryKey: ["isInList", taskID],
-  });
   function handleChangeAddList(id: string) {
     if (!id) {
       console.log("No List Selected");
@@ -66,25 +60,45 @@ export default function AddListPopover({
     }
   }
 
+  const checkIsInListFn = async (listId: string) => {
+    const { data, isError, isLoading } = await useFindListQuery(listId, taskID);
+
+    if (isLoading) {
+      return null;
+    }
+
+    if (isError) {
+      return false;
+    }
+
+    return data ?? false;
+  };
+
+  console.log(alreadyInList);
+
   return (
     <div className="w-full max-w-[470px] h-auto">
       <div>
         <ul className="flex flex-col w-full items-start gap-2">
           {lists?.length
-            ? lists.map((list) => (
-                <li
-                  onClick={() => handleChangeAddList(list.id)}
-                  key={list.id}
-                  className={cn(
-                    "flex cursor-pointer w-full rounded-lg p-1 hover:bg-gray-100 items-start gap-2",
-                    {
-                      "bg-slate-500": isinlist?.id,
-                    }
-                  )}
-                >
-                  <p>{list.name}</p>
-                </li>
-              ))
+            ? lists.map((list) => {
+                const isTaskInList = alreadyInList?.includes(list.id);
+
+                return (
+                  <li
+                    onClick={() => handleChangeAddList(list.id)}
+                    key={list.id}
+                    className={cn(
+                      "flex cursor-pointer w-full rounded-lg p-1 hover:bg-gray-100 items-start gap-2",
+                      {
+                        "bg-slate-500": isTaskInList,
+                      }
+                    )}
+                  >
+                    <p>{list.name}</p>
+                  </li>
+                );
+              })
             : null}
         </ul>
       </div>

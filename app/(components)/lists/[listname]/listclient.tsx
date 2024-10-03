@@ -1,7 +1,7 @@
 "use client";
 
 import { CollabTasksType, singleList } from "@/types";
-import React from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import TaskList from "@/components/TaskList";
 import dateNow from "@/lib/date";
@@ -11,13 +11,17 @@ import { useQuery } from "@tanstack/react-query";
 import { getCollabtaskOnList, getTaskOnList } from "@/app/actions/lists";
 
 export default function Listclient({ params }: { params: string }) {
-  const { data: tasks } = useQuery({
+  const { data: tasks, refetch: refetchTasks } = useQuery({
     queryKey: ["taskOnList"],
     queryFn: async () => await getTaskOnList(params),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
-  const { data: collabTasks } = useQuery({
+  const { data: collabTasks, refetch: refetchCollabTasks } = useQuery({
     queryKey: ["collabTaskOnList"],
     queryFn: async () => await getCollabtaskOnList(params),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   return (
@@ -27,7 +31,8 @@ export default function Listclient({ params }: { params: string }) {
         <p>{dateNow()}</p>
       </header>
 
-      {!tasks && !collabTasks ? (
+      {(!tasks || tasks.tasks.length === 0) &&
+      (!collabTasks || collabTasks.data?.collabTasks.length) ? (
         <div className="text-center flex my-auto full mx-auto mt-[20px] w-auto px-4 h-[350px] items-center">
           <div className="flex flex-col gap-6 items-center">
             <Image

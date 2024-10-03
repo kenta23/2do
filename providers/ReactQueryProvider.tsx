@@ -4,7 +4,7 @@ import {
   getPendingTasks,
   getTask,
 } from "@/app/actions/data";
-import { getLists } from "@/app/actions/lists";
+import { checkIsInListQuery, getLists } from "@/app/actions/lists";
 import {
   QueryClient,
   dehydrate,

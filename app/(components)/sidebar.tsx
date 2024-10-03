@@ -115,7 +115,7 @@ export default function Sidebar() {
           </Link>
 
           <Link
-            href={"/"}
+            href={"/important"}
             className="flex gap-2 items-center w-full h-[45px] px-3"
           >
             <Star size={26} />

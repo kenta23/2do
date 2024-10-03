@@ -55,13 +55,65 @@ export async function getLists() {
     where: {
       userId: session.user.id,
     },
+  });
+
+  return data;
+}
+
+export async function checkIsInListQuery(taskId: string) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  //fetch all lists
+  const data = await prisma.list.findMany({
+    where: {
+      userId: session.user.id,
+    },
     include: {
       collabTasks: true,
       tasks: true,
     },
   });
 
-  return data;
+  //
+
+  const alreadyInList = await Promise.all(
+    data.map(async (list) => {
+      const foundList = await prisma.list.findFirst({
+        where: {
+          id: list.id,
+          userId: session?.user?.id,
+          OR: [
+            {
+              tasks: {
+                some: {
+                  id: taskId,
+                },
+              },
+            },
+            {
+              collabTasks: {
+                some: {
+                  id: taskId,
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+
+      return foundList?.id || null; // Return the id if found, otherwise null
+    })
+  );
+
+  const filteredList = alreadyInList.filter(Boolean);
+
+  return { data, alreadyInList: filteredList };
 }
 
 export async function getTaskOnList(decodedListName: string) {
@@ -239,10 +291,9 @@ export async function addOrDetachListFromTask({
   throw new Error("error");
 }
 
-export async function IsInList(taskId: string, pathname: string) {
+export async function IsInList(listId: string, taskId: string) {
   const session = await auth();
-  const formattedPathname = decodeURIComponent(pathname.split("/").pop() || "");
-  console.log(formattedPathname);
+  // const formattedPathname = decodeURIComponent(pathname.split("/").pop() || "");
 
   if (!session?.user) {
     throw new Error("User not authenticated");
@@ -251,19 +302,20 @@ export async function IsInList(taskId: string, pathname: string) {
   try {
     const data = await prisma.list.findFirst({
       where: {
-        name: formattedPathname,
+        id: listId,
         tasks: {
           some: {
             id: taskId,
           },
         },
       },
+
       select: {
         id: true,
       },
     });
 
-    return data;
+    return data?.id;
   } catch (error) {
     console.log(error);
   }
