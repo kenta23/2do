@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import React from "react";
 import Listclient from "./listclient";
 import dateNow from "@/lib/date";
-import { getSingleList } from "@/app/actions/lists";
+
 
 type paramsType = {
   params: {
@@ -38,18 +38,11 @@ export async function generateMetadata({
 
 export default async function page({ params }: paramsType) {
   const decodedListName = decodeURIComponent(params.listname as string);
+  // const data = await getSingleList(decodedListName);
 
-  const data = await getSingleList(decodedListName);
-
-  console.log("list viewed", data);
   return (
     <div className="bg-backgroundColor relative w-full overflow-x-hidden min-h-screen h-full py-8 px-4">
-      <Listclient
-        listName={decodedListName}
-        list={data?.data}
-        users={data?.users}
-        acceptedTasks={data?.acceptedTasks}
-      />
+      <Listclient params={decodedListName} />
     </div>
   );
 }

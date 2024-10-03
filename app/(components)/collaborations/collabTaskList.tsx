@@ -11,12 +11,12 @@ import CollabTaskItem from "@/app/(components)/collaborations/collabTaskItems";
 export const listStyles = `flex gap-3 cursor-pointer hover:bg-secondaryColor 
        rounded-md hover:text-white duration-200 ease-in-out active:bg-secondaryColor w-full p-1 items-center`;
 
-export default function TaskList<T extends TaskOrCollabTask>({
+export default function CollabTaskList({
   data,
   users,
   querykey,
 }: {
-  data: T[] | undefined;
+  data: CollabTasksType[] | undefined;
   users: basicInfoUser | null;
   querykey: string;
 }) {
@@ -24,16 +24,15 @@ export default function TaskList<T extends TaskOrCollabTask>({
 
   const addnewTaskVariables = useMutationState({
     filters: { mutationKey: ["addNewTodo"], status: "pending" },
-    select: (mutation) => mutation.state.variables as TaskOrCollabTask,
+    select: (mutation) => mutation.state.variables as CollabTasksType,
   });
-  const pathname = usePathname();
 
-  const editTaskVariables = useMutationState<TaskOrCollabTask>({
+  const editTaskVariables = useMutationState<CollabTasksType>({
     filters: {
       mutationKey: ["editTodo"],
       status: "pending",
     },
-    select: (mutation) => mutation.state.variables as TaskOrCollabTask,
+    select: (mutation) => mutation.state.variables as CollabTasksType,
   });
 
   const deleteTaskVariables = useMutationState({
@@ -63,7 +62,7 @@ export default function TaskList<T extends TaskOrCollabTask>({
           <p>Loading</p>
         ) : (
           data
-            .slice()
+            ?.slice()
             .sort(
               (a, b) =>
                 new Date(b.createdAt).getTime() -
@@ -97,13 +96,6 @@ export default function TaskList<T extends TaskOrCollabTask>({
                         </div>
                       </div>
                     </li>
-                  ) : pathname === "/collaborations" ? (
-                    <CollabTaskItem
-                      task={item as CollabTasksType}
-                      key={item.id}
-                      users={users}
-                      querykey={querykey}
-                    />
                   ) : (
                     <TaskItem
                       task={item}
@@ -113,13 +105,6 @@ export default function TaskList<T extends TaskOrCollabTask>({
                     />
                   )
                 )
-              ) : pathname === "/collaborations" ? (
-                <CollabTaskItem
-                  task={item as CollabTasksType}
-                  key={item.id}
-                  users={users}
-                  querykey={querykey}
-                />
               ) : (
                 <TaskItem
                   task={item}

@@ -17,10 +17,15 @@ import { Button } from "./ui/button";
 import { editTask, getSingleTask } from "@/app/actions/data";
 import { usePathname } from "next/navigation";
 import { editFormData, editSchemawithID } from "@/lib/schema";
-import { TaskType } from "@/types";
-import { TaskOrCollabTask } from "./TaskList";
+import { TaskOrCollabTask, TaskType } from "@/types";
 
-export default function EditTaskPopover({ taskId }: { taskId: string }) {
+export default function EditTaskPopover({
+  taskId,
+  querykey,
+}: {
+  taskId: string;
+  querykey: string;
+}) {
   const { data: taskValue } = useQuery({
     queryKey: ["singleTask", taskId],
     queryFn: () => getSingleTask(taskId),
@@ -92,25 +97,29 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     mutationFn: async (data: z.infer<typeof editSchemawithID>) =>
       await editTask(data, pathName),
     onMutate: async (newTodo) => {
-      await queryClient.cancelQueries({ queryKey: ["todos"] }); // Cancel ongoing todos refetch
+      await queryClient.cancelQueries({ queryKey: [querykey] }); // Cancel ongoing todos refetch
 
       //snapshot the previouse items for rolling back incase of mutation error
-      const previousTodos = queryClient.getQueryData(["todos"]); // Get current todos
+      const previousTodos = queryClient.getQueryData([querykey]); // Get current todos
+
       const previousSingleTask = queryClient.getQueryData([
         "singleTask",
         newTodo.id,
       ]);
 
       // Optimistically update the "todos" and "singleTask" cache
-      if (previousTodos) {
-        queryClient.setQueryData(["todos"], (oldTodos: TaskOrCollabTask[]) => {
-          return oldTodos.map((todo) =>
-            todo.id === newTodo.id ? { ...todo, ...newTodo } : todo
-          );
-        });
+      if (Array.isArray(previousTodos)) {
+        queryClient.setQueryData(
+          [querykey],
+          (oldTodos: TaskOrCollabTask[] = []) => {
+            return oldTodos?.map((todo) =>
+              todo.id === newTodo.id ? { ...todo, ...newTodo } : todo
+            );
+          }
+        );
         queryClient.setQueryData(
           ["singleTask", newTodo.id], // Match the "singleTask" query with the newTodo.id
-          (oldTask: TaskType | undefined) =>
+          (oldTask: TaskOrCollabTask | undefined) =>
             oldTask ? { ...oldTask, ...newTodo } : newTodo // Update the single task optimistically
         );
       }
@@ -119,7 +128,7 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     },
     // If the mutation fails, use the context we returned above
     onError: (err, newTodo, context) => {
-      queryClient.setQueryData(["todos"], context?.previousTodos); // Rollback on error
+      queryClient.setQueryData([querykey], context?.previousTodos); // Rollback on error
       queryClient.setQueryData(
         ["singleTask", newTodo.id],
         context?.previousSingleTask
@@ -127,7 +136,7 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
     },
     onSettled: async (newTodo) => {
       queryClient.invalidateQueries({
-        queryKey: ["todos", "assignedTasks", "yourTasks"],
+        queryKey: [querykey],
       });
       queryClient.invalidateQueries({
         queryKey: ["singleTask", taskId], // Refetch the single task with the specific ID
@@ -190,7 +199,12 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
   return (
     <form className="h-full w-full" onSubmit={submit(submitData)}>
       {isSuccess && <p className="text-green-500">Successfully Edited task</p>}
-      {editError && <p className="text-red-500">Error Editing task</p>}
+      {editError && (
+        <li style={{ color: "red" }}>
+          <span>Error </span>
+          <button onClick={() => mutate(variables)}>Retry</button>
+        </li>
+      )}
       <div className="flex h-full mt-[10px] gap-3 items-start flex-col w-full ">
         <input
           type="text"
@@ -276,12 +290,6 @@ export default function EditTaskPopover({ taskId }: { taskId: string }) {
       >
         <span>Save Changes</span>
       </Button>
-      {editError && (
-        <li style={{ color: "red" }}>
-          {variables.content}
-          <button onClick={() => mutate(variables)}>Retry</button>
-        </li>
-      )}
     </form>
   );
 }

@@ -79,7 +79,14 @@ export default function PlannedTodoClient({
                         task.duedate < startOfToday &&
                         task.duedate > endOfToday;
                     })
-                    .map((task) => <TaskItem task={task} key={task.id} />)
+                    .map((task) => (
+                      <TaskItem
+                        task={task}
+                        key={task.id}
+                        users={null}
+                        querykey="plannedTodo"
+                      />
+                    ))
                 ) : (
                   <p className="text-start text-black text-sm">Task is Empty</p>
                 )}
@@ -103,7 +110,12 @@ export default function PlannedTodoClient({
                   )
                   .filter((task) => task.duedate && isTodayTask(task.duedate))
                   .map((task, i) => (
-                    <TaskItem task={task} key={task.id} />
+                    <TaskItem
+                      task={task}
+                      key={task.id}
+                      users={null}
+                      querykey="plannedTodo"
+                    />
                   ))}
               </ul>
             </AccordionContent>
@@ -149,7 +161,12 @@ export default function PlannedTodoClient({
                     return task.duedate && task.duedate > now;
                   })
                   .map((task, i) => (
-                    <TaskItem task={task} key={task.id} />
+                    <TaskItem
+                      task={task}
+                      key={task.id}
+                      users={null}
+                      querykey="plannedTodo"
+                    />
                   ))}
               </ul>
             </AccordionContent>

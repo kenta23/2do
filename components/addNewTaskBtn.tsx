@@ -127,7 +127,7 @@ export default function AddNewTaskBtn() {
     },
     onSettled: (newTodo) => {
       queryClient.invalidateQueries({
-        queryKey: ["todos", "assignedTasks", "yourTasks"],
+        queryKey: ["todos"],
       });
     },
   });

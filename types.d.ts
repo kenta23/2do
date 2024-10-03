@@ -99,3 +99,5 @@ export interface AuthUser {
   userId: string;
   expires: string;
 }
+
+export type TaskOrCollabTask = TaskType | CollabTasksType;

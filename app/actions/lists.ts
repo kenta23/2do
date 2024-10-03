@@ -64,7 +64,7 @@ export async function getLists() {
   return data;
 }
 
-export async function getSingleList(decodedListName: string) {
+export async function getTaskOnList(decodedListName: string) {
   const session = await auth();
 
   if (!session?.user) {
@@ -77,29 +77,41 @@ export async function getSingleList(decodedListName: string) {
         AND: [{ name: decodedListName }, { userId: session.user.id }],
       },
       include: {
-        collabTasks: {
-          where: {
-            lists: {
-              some: {
-                name: decodedListName,
-              },
-            },
-          },
-          include: {
-            owner: true,
-            pendingTasks: true,
-          },
-        },
         tasks: true,
         //follow other tasks type
       },
     });
 
-    //from other user tasks
-    const acceptedTasks = await prisma.collabTasks.findMany({
+    return data;
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+}
+export async function getCollabtaskOnList(params: string) {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const data = await prisma.list.findFirst({
       where: {
-        joinedUsers: {
-          has: session.user.id,
+        AND: [{ userId: session.user.id }, { name: params }],
+      },
+      include: {
+        collabTasks: {
+          where: {
+            lists: {
+              some: {
+                name: params,
+              },
+            },
+          },
+          include: {
+            owner: true,
+          },
         },
       },
     });
@@ -119,7 +131,7 @@ export async function getSingleList(decodedListName: string) {
       },
     });
 
-    return { data, users, acceptedTasks };
+    return { data, users };
   } catch (error) {
     console.log(error);
     return;
@@ -134,6 +146,10 @@ export async function addOrDetachListFromTask({
   listID: string;
 }) {
   const session = await auth();
+  const headerList = headers();
+  const path = new URL(headerList.get("referer") || "").pathname;
+
+  console.log("my current path", path);
 
   if (!session?.user) {
     throw new Error("User not authenticated");
@@ -144,45 +160,75 @@ export async function addOrDetachListFromTask({
     const list = await prisma.list.findFirst({
       where: {
         id: listID,
-        tasks: {
-          some: {
-            id: taskId,
-          },
-        },
+        userId: session.user.id,
       },
     });
 
     let data;
-
     //if the list exist already
-    if (list?.id) {
-      data = await prisma.task.update({
-        where: {
-          id: taskId,
-          userId: session.user.id,
-        },
-        data: {
-          list: {
-            disconnect: {
-              id: listID,
+    //DISCONNECT TO LIST
+    if (path === "/collaborations") {
+      //find the certain list
+      if (list?.id) {
+        data = await prisma.collabTasks.update({
+          where: {
+            id: taskId,
+            userId: session.user.id,
+          },
+          data: {
+            lists: {
+              disconnect: {
+                id: listID,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        data = await prisma.collabTasks.update({
+          where: {
+            id: taskId,
+            userId: session.user.id,
+          },
+          data: {
+            lists: {
+              connect: {
+                id: listID,
+              },
+            },
+          },
+        });
+      }
     } else {
-      data = await prisma.task.update({
-        where: {
-          id: taskId,
-          userId: session.user.id,
-        },
-        data: {
-          list: {
-            connect: {
-              id: listID,
+      //list from todo task
+      if (list?.id) {
+        data = await prisma.task.update({
+          where: {
+            id: taskId,
+            userId: session.user.id,
+          },
+          data: {
+            list: {
+              disconnect: {
+                id: listID,
+              },
             },
           },
-        },
-      });
+        });
+      } else {
+        data = await prisma.task.update({
+          where: {
+            id: taskId,
+            userId: session.user.id,
+          },
+          data: {
+            list: {
+              connect: {
+                id: listID,
+              },
+            },
+          },
+        });
+      }
     }
 
     return data;
@@ -191,4 +237,34 @@ export async function addOrDetachListFromTask({
   }
 
   throw new Error("error");
+}
+
+export async function IsInList(taskId: string, pathname: string) {
+  const session = await auth();
+  const formattedPathname = decodeURIComponent(pathname.split("/").pop() || "");
+  console.log(formattedPathname);
+
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    const data = await prisma.list.findFirst({
+      where: {
+        name: formattedPathname,
+        tasks: {
+          some: {
+            id: taskId,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
 }

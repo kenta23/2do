@@ -1,11 +1,12 @@
 "use client";
 
-import { addOrDetachListFromTask } from "@/app/actions/lists";
+import { addOrDetachListFromTask, IsInList } from "@/app/actions/lists";
+import { cn } from "@/lib/utils";
 import { singleList } from "@/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import React from "react";
-import { TaskOrCollabTask } from "./TaskList";
 
 export default function AddListPopover({
   lists,
@@ -16,6 +17,7 @@ export default function AddListPopover({
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   taskID: string;
 }) {
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const { mutate: mutateList } = useMutation({
     mutationFn: async ({
@@ -32,7 +34,18 @@ export default function AddListPopover({
         exact: true,
         type: "active",
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["isInList"],
+        exact: true,
+        type: "active",
+      });
     },
+  });
+
+  const { data: isinlist } = useQuery({
+    queryFn: async () => await IsInList(taskID, pathname),
+    queryKey: ["isInList", taskID],
   });
   function handleChangeAddList(id: string) {
     if (!id) {
@@ -54,15 +67,20 @@ export default function AddListPopover({
   }
 
   return (
-    <div className="w-full max-w-[450px] h-auto">
+    <div className="w-full max-w-[470px] h-auto">
       <div>
-        <ul className="flex flex-col items-start gap-2">
+        <ul className="flex flex-col w-full items-start gap-2">
           {lists?.length
             ? lists.map((list) => (
                 <li
                   onClick={() => handleChangeAddList(list.id)}
                   key={list.id}
-                  className="flex cursor-pointer bg-orange-100 rounded-lg p-2 items-start gap-2"
+                  className={cn(
+                    "flex cursor-pointer w-full rounded-lg p-1 hover:bg-gray-100 items-start gap-2",
+                    {
+                      "bg-slate-500": isinlist?.id,
+                    }
+                  )}
                 >
                   <p>{list.name}</p>
                 </li>

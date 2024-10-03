@@ -19,7 +19,7 @@ export default async function ReactQueryProvider({
     defaultOptions: {
       queries: {
         staleTime: 3 * 60 * 1000, // this sets the cache time to 3 minutes
-        gcTime: 2 * 2000,
+        gcTime: 60 * 1000, //1 minute
       },
     },
   });

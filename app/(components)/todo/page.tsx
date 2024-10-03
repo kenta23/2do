@@ -12,7 +12,7 @@ export default function page() {
           <p>{dateNow()}</p>
         </header>
 
-        <TodoClient />
+        <TodoClient queryKey="todos" />
       </div>
     </div>
   );

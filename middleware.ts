@@ -1,6 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/utils/supabase/middleware";
-import { createClient } from "./utils/supabase/server";
 import { request } from "http";
 import { auth } from "./auth";
 
