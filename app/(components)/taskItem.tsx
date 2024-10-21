@@ -51,34 +51,6 @@ export default function TaskItem({
     },
   });
 
-  // const { mutate: deleteMutation } = useDeleteMutation(
-  //   querykey,
-  //   queryClient,
-  //   pathname
-  // );
-
-  //const deleteTaskFn = () => deleteTask(task.id, deleteMutation, querykey, queryClient);
-  // const deleteTaskFn = deleteTask(
-  //   task.id,
-  //   deleteMutation,
-  //   querykey,
-  //   queryClient
-  // );
-  // const deleteTask = async (id: string) => {
-  //   try {
-  //     deleteMutation(id, {
-  //       onSettled: () => {
-  //         console.log("deleting task");
-  //         queryClient.invalidateQueries({
-  //           queryKey: [querykey],
-  //         });
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
   return (
     <li className="min-w-min px-4 py-4 rounded-full bg-white">
       <div className="flex justify-between items-center gap-2 w-full">

@@ -38,18 +38,21 @@ export default async function ReactQueryProvider({
       queryKey: ["pendings"],
       queryFn: async () => await getPendingTasks(),
     }),
-    queryClient.prefetchQuery({
-      queryKey: ["assignedTasks"],
-      queryFn: async () => await fetchYourTasksTodos(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: ["yourTasks"],
-      queryFn: async () => await fetchAssignedTasks(),
-    }),
+    // queryClient.prefetchQuery({
+    //   queryKey: ["assignedTasks"],
+    //   queryFn: async () => await fetchYourTasksTodos(),
+    // }),
+    // queryClient.prefetchQuery({
+    //   queryKey: ["yourTasks"],
+    //   queryFn: async () => await fetchAssignedTasks(),
+    // }),
   ]);
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary
+      options={{ defaultOptions: { queries: {} } }}
+      state={dehydrate(queryClient)}
+    >
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </HydrationBoundary>

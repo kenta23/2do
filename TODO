@@ -1,11 +1,22 @@
 
 Todo:
   ☐ add OTP code function to email 
-  ☐ database migration
-  ☐ fix bug on sign in when user already signed in, it can't redirect to / or /todo 
+  ✔ database migration @done(24-10-17 21:38)
+  ✔ fix bug on sign in when user already signed in, it can't redirect to / or /todo @done(24-10-17 21:38)
   ☐ complete all functions before doing the page responsive
-  ☐ advance querying the data in sidebar lists 
+  ✔ advance querying the data in sidebar lists @done(24-10-17 21:38)
   ☐ add sign in error page 
   ✔ fix the deletTask function cant import to client component @done(24-10-02 21:31)
   ☐ fix the addlistoption validation 
   ☐ fix add task to list 
+
+
+  October 15 2024 
+  ✔ Add date validation error when due date or remind date is already passed than recent date @done(24-10-17 21:38)
+  ✔ Add adding new collaboration users on editing task from collab task @done(24-10-15 11:40)
+  ☐ File attachments on both tasks 
+  ☐ Notification bell alarm when task has remind me an due date using Toast 
+  ☐ Fix the notification adding pagination (ex. See all notifs on the bottom )
+  ☐ Add the completed function when tasks are completed 
+  ✔ Display collaborative users on collab task items @done(24-10-21 12:28)
+  ✔ fix the notification unread to read function @done(24-10-21 12:28)

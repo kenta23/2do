@@ -12,14 +12,16 @@ import { usePathname } from "next/navigation";
 export default function Collabtasksonlist({
   tasks,
   users,
+  queryKey,
 }: {
   tasks: CollabTasksType[] | undefined;
   users: basicInfoUser | null;
+  queryKey: string;
 }) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { mutate: deleteMutation } = useDeleteMutation(
-    "collabTaskList",
+    queryKey,
     queryClient,
     pathname
   );
@@ -78,7 +80,7 @@ export default function Collabtasksonlist({
                   {/* FOOTLONG OPTIONS */}
                   <TaskOptions
                     deleteTask={() => deleteTaskFn(task.id)}
-                    querykey={"collabTaskList"}
+                    querykey={queryKey}
                     taskId={task.id}
                     pathname={pathname}
                   />

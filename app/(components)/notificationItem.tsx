@@ -18,35 +18,66 @@ import {
 import { Button } from "@/components/ui/button";
 import { inView, useInView } from "framer-motion";
 import { cn } from "@/lib/utils";
-
+import { PendingTaskType } from "@/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { acceptedTask } from "../actions/data";
+import { toast } from "react-toastify";
 export default function NotificationItem({
   item,
   onTaskInView,
   countUnreadNotification,
 }: {
-  item: any;
-  onTaskInView: (id: string) => void;
+  item: PendingTaskType;
+  onTaskInView: () => void;
   countUnreadNotification: number;
 }) {
-  const [taskIds, setTaskIds] = useState<String[]>([]);
   const itemRef = useRef<HTMLLIElement | null>(null);
-  const isInView = useInView(itemRef, { 
-     once: true
+  const isInView = useInView(itemRef, {
+    once: true,
   });
+  const queryClient = useQueryClient();
 
   const formatDistanceToNow = (date: Date) => {
     return new Date(date).toLocaleString();
   };
+
+  //mutation for accepting the task
+  const { mutate, data } = useMutation({
+    mutationFn: async (id: string) => acceptedTask(id),
+    mutationKey: ["acceptingTask"],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["pendings"],
+      });
+
+      toast("Successfully Accepted Task");
+    },
+    onError: (error) => {
+      console.log(error.message);
+    },
+  });
 
   useEffect(() => {
     console.log("Element is in view: ", isInView);
   }, [isInView]);
 
   useEffect(() => {
-    if (isInView) {
-      onTaskInView(item.id); // Call the callback to add the task ID
-    }
+    onTaskInView(); // Call the callback to add the task ID
+    console.log("Running this side effect");
   }, [isInView, item.id, onTaskInView]);
+
+  console.log("ID", item.id);
+
+  function handleAcceptTask() {
+    if (!item.id) {
+      return;
+    }
+    mutate(item.id, {
+      onSettled: () => {
+        console.log("Accepting the task");
+      },
+    });
+  }
 
   return (
     <li
@@ -93,11 +124,14 @@ export default function NotificationItem({
           <DialogHeader>
             <DialogTitle>Task Invitation</DialogTitle>
           </DialogHeader>
-          <DialogDescription>Click yes or no</DialogDescription>
-          <div className="w-full">
+          <div className="w-[85%]">
             Are you sure you want to accept this task?
             <div className="flex gap-2 items-center mt-[8px]">
-              <Button type="button" variant={"destructive"}>
+              <Button
+                onClick={handleAcceptTask}
+                type="button"
+                variant={"destructive"}
+              >
                 Yes
               </Button>
               <Button type="button" variant={"default"}>

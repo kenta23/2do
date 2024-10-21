@@ -1,4 +1,10 @@
-import { deleteSingleTask, getTask } from "@/app/actions/data";
+import {
+  deleteSingleTask,
+  fetchAssignedTasks,
+  fetchYourTasksTodos,
+  getTask,
+  suggestedUsers,
+} from "@/app/actions/data";
 import { markAsImportant } from "@/app/actions/important";
 import { checkIsInListQuery, getLists, IsInList } from "@/app/actions/lists";
 import { TaskOrCollabTask, TaskType } from "@/types";
@@ -24,7 +30,6 @@ export function useTasksQuery(querykey: string, pathname: string) {
   return useQuery({
     queryKey: [querykey],
     queryFn: async () => await getTask(pathname),
-    refetchOnMount: true,
   });
 }
 
@@ -105,5 +110,27 @@ export const useImportantTaskToggle = (id: string, pathname: string) => {
     mutationFn: async (taskId: string) =>
       await markAsImportant(taskId, pathname),
     mutationKey: ["importantMutation"],
+  });
+};
+
+export const useFetchAssignedTask = () => {
+  return useQuery({
+    queryKey: ["assignedTasks"],
+    queryFn: async () => await fetchAssignedTasks(),
+  });
+};
+
+export const useFetchYourTasks = () => {
+  return useQuery({
+    queryKey: ["yourTasks"],
+    queryFn: async () => await fetchYourTasksTodos(),
+  });
+};
+
+export const useFetchUserIds = (debouncedText: string) => {
+  return useQuery({
+    queryKey: ["usersearch"],
+    queryFn: async () => await suggestedUsers(debouncedText),
+    staleTime: Infinity,
   });
 };

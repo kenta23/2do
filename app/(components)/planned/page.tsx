@@ -18,11 +18,6 @@ export default async function page() {
 
   return (
     <div className="bg-backgroundColor relative w-full min-h-screen overflow-x-hidden py-8 px-4">
-      <header className="mx-8">
-        <h2 className="text-2xl font-medium">Planned</h2>
-        <p>{dateNow()}</p>
-      </header>
-
       <PlannedTodoClient data={data} />
     </div>
   );

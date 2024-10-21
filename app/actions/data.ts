@@ -135,25 +135,29 @@ export async function getTask(pathname: string) {
           userId: userFromDb?.id, // Filter by userId, not id
         },
       });
-    } 
-    else {
-      if(pathname === '/important') { 
-
+    } else {
+      if (pathname === "/important") {
+        const collabTasks = await prisma.collabTasks.findMany({
+          where: {
+            userId: userFromDb?.id, // Filter by userId, not id
+            important: true,
+          },
+        });
         data = await prisma.task.findMany({
           where: {
             userId: userFromDb?.id, // Filter by userId, not id
             important: true,
           },
         });
+
+        data = data.concat(collabTasks);
+      } else {
+        data = await prisma.task.findMany({
+          where: {
+            userId: userFromDb?.id, // Filter by userId, not id
+          },
+        });
       }
-        else { 
-          data = await prisma.task.findMany({
-            where: {
-              userId: userFromDb?.id, // Filter by userId, not id
-            },
-          });
-        }
-     
     }
 
     return data;
@@ -285,7 +289,6 @@ export async function deleteSingleTask(taskId: string, pathname: string) {
 
   try {
     let data;
-
     console.log("my pathname", pathname);
 
     if (pathname === "/collaborations") {
@@ -293,13 +296,43 @@ export async function deleteSingleTask(taskId: string, pathname: string) {
         where: { id: taskId as string, userId: session.user.id },
       });
       console.log("DELETED collab task");
+    }
+    if (pathname.includes("/lists")) {
+      //find the task id whether from the tasks or collab tasks
+      const taskFound =
+        (await prisma.task.findFirst({
+          where: { id: taskId as string, userId: session.user.id },
+        })) ||
+        (await prisma.collabTasks.findFirst({
+          where: { id: taskId as string, userId: session.user.id },
+        }));
+
+      if (taskFound) {
+        if (
+          await prisma.task.findFirst({
+            where: { id: taskFound.id, userId: session.user.id },
+          })
+        ) {
+          data = await prisma.task.delete({
+            where: { id: taskFound.id },
+          });
+        } else if (
+          await prisma.collabTasks.findFirst({
+            where: { id: taskFound.id, userId: session.user.id },
+          })
+        ) {
+          // Delete from 'collabTasks' table if found there
+          data = await prisma.collabTasks.delete({
+            where: { id: taskFound.id },
+          });
+        }
+      }
     } else {
       data = await prisma.task.delete({
         where: { id: taskId as string, userId: session.user.id },
       });
 
       console.log("DELETED todo task");
-
       revalidatePath("/planned");
       return data;
     }
@@ -397,7 +430,22 @@ export async function fetchAssignedTasks() {
       },
     });
 
-    return acceptedTasks;
+    // Extract all unique user IDs from the joinedUsers arrays
+    const joinedUserIds = [
+      ...acceptedTasks.flatMap((task) => task.joinedUsers),
+    ];
+
+    // Fetch users whose IDs are in the `joinedUserIds` array
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          in: joinedUserIds,
+        },
+      },
+      select: { id: true, name: true, image: true },
+    });
+
+    return { acceptedTasks, users };
   } catch (error) {
     console.log(error);
   }
@@ -460,10 +508,6 @@ export async function getPendingTasks() {
         },
       },
     },
-    cacheStrategy: {
-      swr: 60,
-      ttl: 60,
-    },
   });
 
   const countViewedTasks = await prisma.pendingTask.count({
@@ -479,7 +523,7 @@ export async function getPendingTasks() {
   return { pendingTasks, countViewedTasks };
 }
 
-export async function viewedNotifications(taskId: string) {
+export async function viewedNotifications(id: string) {
   const session = await auth();
 
   // Check if user is authenticated
@@ -494,13 +538,20 @@ export async function viewedNotifications(taskId: string) {
   });
 
   try {
+    const findTaskInPendingtask = await prisma.pendingTask.findUnique({
+      where: { id },
+    });
+
+    console.log("pending task id", findTaskInPendingtask);
+
     const data = await prisma.pendingTask.update({
       //find first the single task id
       where: {
-        id: taskId,
+        id: findTaskInPendingtask?.id,
+        taskId: findTaskInPendingtask?.taskId,
         userId: userFromDb?.id,
-        viewed: false,
       },
+
       data: {
         viewed: true, //update the status, and add user to the joinedUsers from collaboration task
       },
@@ -509,8 +560,8 @@ export async function viewedNotifications(taskId: string) {
     return data;
   } catch (error) {
     console.log(error);
+    return;
   }
-  return;
 }
 
 export async function acceptedTask(id: string) {
@@ -533,13 +584,12 @@ export async function acceptedTask(id: string) {
       where: {
         id,
         userId: userFromDb?.id,
-        viewed: false,
       },
+
       data: {
         status: "ACCEPTED", //update the status, and add user to the joinedUsers from collaboration task
         collabTasks: {
           update: {
-            where: { id },
             data: {
               joinedUsers: {
                 push: userFromDb?.id,
@@ -549,11 +599,11 @@ export async function acceptedTask(id: string) {
         },
       },
     });
+
     return data;
   } catch (error) {
     console.log(error);
   }
 
-  revalidatePath("/");
   return;
 }

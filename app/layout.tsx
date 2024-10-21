@@ -7,6 +7,7 @@ import ProviderLocal from "@/components/LocalizationProvider";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
 import Store from "@/providers/Store";
+import TodoNotifyContextProvider from "@/providers/TodoNotifyContextProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 

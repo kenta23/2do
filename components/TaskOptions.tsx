@@ -115,7 +115,10 @@ export default function TaskOptions({
                   align="start"
                   className="w-full"
                 >
+                  {/* TODO TASKS */}
                   <EditTaskPopover taskId={taskId} querykey={querykey} />
+
+                  {/* COLLAB TASKS */}
                 </PopoverContent>
               </Popover>
             </li>

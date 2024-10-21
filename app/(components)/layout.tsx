@@ -7,6 +7,13 @@ import { auth } from "@/auth";
 import { Session, User } from "next-auth";
 import { headers } from "next/headers";
 import { cn } from "@/lib/utils";
+import { ContextProvider } from "@/providers/ContextProvider";
+import dateNow from "@/lib/date";
+import PageTitle from "./PageTitle";
+import { Bounce, ToastContainer } from "react-toastify";
+import TodoNotifyContextProvider from "@/providers/TodoNotifyContextProvider";
+// import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/ReactToastify.min.css";
 
 export const metadata: Metadata = {
   title: "2Do",
@@ -22,6 +29,8 @@ export default async function RootLayout({
   const pathname = new URL(header.get("referer") || "http://localhost")
     .pathname;
 
+  console.log(pathname);
+
   return (
     <div className="w-full h-full max-h-screen">
       <div className="flex h-full min-h-screen max-h-screen">
@@ -29,19 +38,33 @@ export default async function RootLayout({
 
         <div className="w-full h-full">
           <Search user={session?.user as User} />
-          {children}
+
+          <PageTitle>{children}</PageTitle>
         </div>
       </div>
 
       <div
         className={cn(
-          "text-center place-self-end items-center ms-[228px] flex justify-center align-bottom sticky bottom-3",
+          "text-center place-self-center items-center md:ms-[228px] flex justify-center align-bottom sticky bottom-3",
           {
-            hidden: pathname.startsWith("/lists"),
+            hidden: pathname.includes("/lists"),
           }
         )}
       >
         <AddNewTaskBtn />
+        <ToastContainer
+          position="top-right"
+          autoClose={2000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          transition={Bounce}
+        />
       </div>
     </div>
   );

@@ -14,14 +14,10 @@ export default function Listclient({ params }: { params: string }) {
   const { data: tasks, refetch: refetchTasks } = useQuery({
     queryKey: ["taskOnList"],
     queryFn: async () => await getTaskOnList(params),
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
   });
   const { data: collabTasks, refetch: refetchCollabTasks } = useQuery({
     queryKey: ["collabTaskOnList"],
     queryFn: async () => await getCollabtaskOnList(params),
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
   });
 
   return (
@@ -81,6 +77,7 @@ export default function Listclient({ params }: { params: string }) {
               <Collabtasksonlist
                 tasks={collabTasks?.data?.collabTasks}
                 users={collabTasks?.users}
+                queryKey={"collabTaskOnList"}
               />
             </div>
           </div>

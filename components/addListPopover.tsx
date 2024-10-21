@@ -38,6 +38,16 @@ export default function AddListPopover({
         exact: true,
         type: "active",
       });
+
+      queryClient.refetchQueries({
+        queryKey: ["taskOnList"],
+        exact: true,
+      });
+
+      queryClient.refetchQueries({
+        queryKey: ["collabTaskOnList"],
+        exact: true,
+      });
     },
   });
 
@@ -60,20 +70,6 @@ export default function AddListPopover({
     }
   }
 
-  const checkIsInListFn = async (listId: string) => {
-    const { data, isError, isLoading } = await useFindListQuery(listId, taskID);
-
-    if (isLoading) {
-      return null;
-    }
-
-    if (isError) {
-      return false;
-    }
-
-    return data ?? false;
-  };
-
   console.log(alreadyInList);
 
   return (
@@ -91,7 +87,7 @@ export default function AddListPopover({
                     className={cn(
                       "flex cursor-pointer w-full rounded-lg p-1 hover:bg-gray-100 items-start gap-2",
                       {
-                        "bg-slate-500": isTaskInList,
+                        "text-primaryColor": isTaskInList,
                       }
                     )}
                   >

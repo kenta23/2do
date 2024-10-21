@@ -17,10 +17,6 @@ export default async function SignIn(props: {
 
   console.log("user", user);
 
-  async function logout() {
-    await signOut();
-  }
-
   return (
     <div className="min-h-screen w-full gap-4 flex flex-col justify-center items-center">
       <div className="space-y-4 flex items-center flex-col mx-auto">
@@ -78,11 +74,7 @@ export default async function SignIn(props: {
             console.log(error);
           }
         }}
-      >
-        <button type="submit" className="cursor-pointer">
-          Logout
-        </button>
-      </form>
+      ></form>
     </div>
   );
 }

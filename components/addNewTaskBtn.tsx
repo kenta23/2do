@@ -16,16 +16,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { FormData, Taskschema } from "@/lib/schema";
-import { Input } from "./ui/input";
-import Link from "next/link";
-import Image from "next/image";
 import { useDebounce } from "use-debounce";
 import { TaskType } from "@/types";
+import AddcollabUsers from "./AddcollabUsers";
+import { useFetchUserIds } from "@/lib/queries";
+import { ErrorMessage } from "@hookform/error-message";
 
 export default function AddNewTaskBtn() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [listFiles, setListFiles] = useState<File[] | null>([]);
-  const [done, setDone] = useState<boolean>(false);
   const [storeDueDate, setStoreDueDate] = useState<Date | null>(null);
   const [storeRemindMe, setStoreRemindMe] = useState<Date | null>(null);
   const pathname = usePathname();
@@ -35,56 +34,17 @@ export default function AddNewTaskBtn() {
   const [userIds, setUserIds] = useState<
     { id: string; image: string | null; name: string | null }[]
   >([]);
-  const [displayUser, setDisplayUser] = useState<boolean>(false);
-  const containerUsers = useRef<HTMLDivElement>(null);
+  // const [displayUser, setDisplayUser] = useState<boolean>(false);
+  // const containerUsers = useRef<HTMLDivElement>(null);
 
-  //real time user suggestion searching
-  const {
-    data: users,
-    isLoading,
-    error: usersError,
-  } = useQuery({
-    queryKey: ["usersearch"],
-    queryFn: async () => await suggestedUsers(debouncedText),
-    staleTime: Infinity,
-  });
-
-  useEffect(() => {
-    if (users && users.length && text.length) {
-      setDisplayUser(true);
-    } else {
-      setDisplayUser(false);
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerUsers.current &&
-        !containerUsers.current.contains(event.target as Node) &&
-        users &&
-        text.length
-      ) {
-        setDisplayUser(false);
-        console.log("clicked outside the container");
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    console.log("display user state", displayUser);
-    //cleanup function
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, users?.length, containerUsers]);
+  // //real time user suggestion searching
+  const { data: users } = useFetchUserIds(debouncedText);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    control,
     setValue,
-    getValues,
     reset: resetValues,
   } = useForm<FormData>({
     resolver: zodResolver(Taskschema),
@@ -94,20 +54,19 @@ export default function AddNewTaskBtn() {
       remindme: null,
     },
   });
+
   //api call for post request to server
-  const {
-    data: taskData,
-    error,
-    mutate,
-    isPending,
-    isSuccess,
-    reset,
-  } = useMutation({
+  const { error, mutate, isPending, isSuccess, reset } = useMutation({
     mutationFn: async (datas: FormData) =>
       await createMyTask(datas, pathname, users),
     mutationKey: ["addNewTodo"],
     onMutate: async (newTodo) => {
       await queryClient.cancelQueries({ queryKey: ["todos"] });
+
+      // if (pathname === "/collaborations") {
+      //   await queryClient.cancelQueries({ queryKey: ["yourTasks"] });
+      //   await queryClient.cancelQueries({ queryKey: ["assignedTasks"] });
+      // }
 
       //snapshot the prev value
       const previousTodos = queryClient.getQueryData(["todos"]);
@@ -129,20 +88,22 @@ export default function AddNewTaskBtn() {
       queryClient.invalidateQueries({
         queryKey: ["todos"],
       });
+
+      // if (pathname === "/collaborations") {
+      //   queryClient.invalidateQueries({
+      //     queryKey: ["yourTasks"],
+      //   });
+      //   queryClient.invalidateQueries({
+      //     queryKey: ["assignedTasks"],
+      //   });
+      // }
     },
   });
 
   const onSubmit: SubmitHandler<FormData> = (data: FormData) => {
     console.log("SUBMITTED DATA", data);
 
-    const result = Taskschema.safeParse(data);
-
-    if (!result.success) {
-      console.log("Something error!");
-
-      return;
-    }
-    mutate(result.data, {
+    mutate(data, {
       onSuccess: () => {
         console.log("SUCCESSFULLY SAVED DATA");
         resetValues();
@@ -156,7 +117,11 @@ export default function AddNewTaskBtn() {
     });
   };
 
-  console.log("invited users", userIds);
+  // const onError = (errors: any) => {
+  //   console.log("FORM ERRORS:", errors);
+  // };
+
+  console.log(errors);
 
   const openFile = () => {
     if (fileInputRef.current) {
@@ -176,12 +141,11 @@ export default function AddNewTaskBtn() {
   };
 
   return (
-    <div className="">
+    <div className="mx-auto flex items-center justify-center">
       {/* DIALOG BTN */}
-
       <Popover>
         <PopoverTrigger>
-          <div className="w-[550px] flex items-center justify-center rounded-full bg-primaryColor text-white hover:bg-orange-300 transition-all duration-150 ease-linear  h-[60px]">
+          <div className="w-[300px] text-center  md:w-[550px] flex items-center justify-center rounded-full bg-primaryColor text-white hover:bg-orange-300 transition-all duration-150 ease-linear  h-[60px]">
             <div className="flex gap-2">
               <Plus />
               <span className="text-md">Add new Task</span>
@@ -189,11 +153,40 @@ export default function AddNewTaskBtn() {
           </div>
         </PopoverTrigger>
 
-        <PopoverContent className="w-[500px] min-h-max max-h-min">
+        <PopoverContent className="w-[300px] md:w-[500px] min-h-max max-h-min">
           {isSuccess && (
             <p className="text-green-500">Successfully created task</p>
           )}
-          {error && <p className="text-red-500">Error creating task</p>}
+
+          {errors.content && (
+            <ErrorMessage
+              errors={errors}
+              name="content"
+              render={({ message }) => (
+                <p className="text-red-500">{message}</p>
+              )}
+            />
+          )}
+
+          {errors.duedate && (
+            <ErrorMessage
+              errors={errors.duedate}
+              name="duedate"
+              render={({ message }) => (
+                <p className="text-red-500">{message}</p>
+              )}
+            />
+          )}
+
+          {errors.remindme && (
+            <ErrorMessage
+              errors={errors.remindme}
+              name="remindme"
+              render={({ message }) => (
+                <p className="text-red-500">{message}</p>
+              )}
+            />
+          )}
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex mt-[10px] gap-6 items-start flex-col w-full ">
               <input
@@ -287,113 +280,14 @@ export default function AddNewTaskBtn() {
             </div>
 
             {/* IF ITS IN THE COLLABORATION PAGE THEN DISPLAY THIS FORM */}
-            {pathname === "/collaborations" && (
-              <div className="w-full  mt-4 space-y-3">
-                <p className="text-md font-medium">Assigned To</p>
-
-                <div className="relative h-auto" ref={containerUsers}>
-                  <Input
-                    placeholder="Enter Username or Email"
-                    value={text}
-                    type="text"
-                    onChange={(e) => {
-                      setText(e.target.value);
-
-                      if (debouncedText) {
-                        queryClient.refetchQueries({
-                          queryKey: ["usersearch"],
-                          exact: true,
-                          type: "active",
-                        });
-                      }
-                    }}
-                    className="h-[45px] border rounded-lg border-secondaryColor"
-                    onFocus={() => setDisplayUser(true)}
-                  />
-
-                  {/* SUGGESTED USERS */}
-                  {users && users.length > 0 && displayUser && (
-                    <div
-                      className={`bg-slate-100 ${
-                        displayUser ? "block" : "hidden"
-                      } z-50 shadow-md rounded-md absolute h-auto w-full px-3 py-2`}
-                    >
-                      <ul className="flex flex-col space-y-1 items-start w-full">
-                        {users &&
-                          users.map((user) => (
-                            <li
-                              onClick={() => {
-                                const alreadyIncludedUsers = userIds.find(
-                                  (item) => item.id === user.id
-                                );
-
-                                if (alreadyIncludedUsers) return;
-
-                                const addUser = {
-                                  id: user.id,
-                                  image: user.image as string | "/Logo.png",
-                                  name: user.name,
-                                };
-                                setUserIds((prevUsers) => [
-                                  ...prevUsers,
-                                  addUser,
-                                ]);
-
-                                setDisplayUser(false);
-                                console.log("display user", displayUser);
-                              }}
-                              key={user.id}
-                              className="flex cursor-pointer w-full h-full mb-1 border-b-[1px] items-center gap-3"
-                            >
-                              <Image
-                                alt="User Avatar"
-                                width={50}
-                                className="rounded-full"
-                                height={100}
-                                src={user.image ? user.image : "/Logo.png"}
-                              />
-                              <span className="text-sm">{user.name}</span>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-3">
-                  <p className="text-sm">Collaborators</p>
-
-                  <ul className="mt-1 pt-2">
-                    {userIds &&
-                      userIds.map((user) => (
-                        <li
-                          key={user.id}
-                          className="flex items-center gap-3 cursor-pointer w-fit px-2"
-                        >
-                          <Image
-                            alt="User Avatar"
-                            width={35}
-                            className="rounded-full"
-                            height={100}
-                            src={user.image ?? "/Logo.png"}
-                          />
-                          <span className="text-sm">{user.name}</span>
-
-                          <X
-                            onClick={() =>
-                              setUserIds(
-                                userIds.filter((u) => u.id !== user.id)
-                              )
-                            }
-                            size={16}
-                            className="cursor-pointer ml-2"
-                          />
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              </div>
-            )}
+            <AddcollabUsers
+              users={users}
+              userIds={userIds}
+              setUserIds={setUserIds}
+              text={text}
+              setText={setText}
+              debouncedText={debouncedText}
+            />
 
             <Button
               type="submit"

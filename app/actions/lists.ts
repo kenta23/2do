@@ -155,7 +155,7 @@ export async function getCollabtaskOnList(params: string) {
       include: {
         collabTasks: {
           where: {
-            lists: {
+            list: {
               some: {
                 name: params,
               },
@@ -208,82 +208,85 @@ export async function addOrDetachListFromTask({
   }
 
   try {
-    //find the list with the exact task
-    const list = await prisma.list.findFirst({
+    // Find the list associated with the user
+    // const list = await prisma.list.findFirst({
+    //   where: {
+    //     id: listID,
+    //     userId: session.user.id,
+    //   },
+    // });
+
+    // Check if the task exists for the user
+    const collabTask = await prisma.collabTasks.findFirst({
       where: {
-        id: listID,
         userId: session.user.id,
+        id: taskId,
+      },
+      include: {
+        list: true, // Include the lists related to the task
       },
     });
 
-    let data;
-    //if the list exist already
-    //DISCONNECT TO LIST
-    if (path === "/collaborations") {
-      //find the certain list
-      if (list?.id) {
-        data = await prisma.collabTasks.update({
-          where: {
-            id: taskId,
-            userId: session.user.id,
-          },
-          data: {
-            lists: {
-              disconnect: {
-                id: listID,
-              },
-            },
-          },
-        });
-      } else {
-        data = await prisma.collabTasks.update({
-          where: {
-            id: taskId,
-            userId: session.user.id,
-          },
-          data: {
-            lists: {
-              connect: {
-                id: listID,
-              },
-            },
-          },
-        });
-      }
-    } else {
-      //list from todo task
-      if (list?.id) {
-        data = await prisma.task.update({
-          where: {
-            id: taskId,
-            userId: session.user.id,
-          },
-          data: {
-            list: {
-              disconnect: {
-                id: listID,
-              },
-            },
-          },
-        });
-      } else {
-        data = await prisma.task.update({
-          where: {
-            id: taskId,
-            userId: session.user.id,
-          },
-          data: {
-            list: {
-              connect: {
-                id: listID,
-              },
-            },
-          },
-        });
-      }
+    const todoTask = await prisma.task.findFirst({
+      where: {
+        userId: session.user.id,
+        id: taskId,
+      },
+      include: {
+        list: true, // Include the lists related to the task
+      },
+    });
+
+    if (!collabTask && !todoTask) {
+      throw new Error("Task not found");
     }
 
-    return data;
+    const isListInTask = (task: typeof collabTask | typeof todoTask) =>
+      task?.list.some((l) => l.id === listID);
+
+    let data;
+    let result;
+
+    // Prepare data for update based on the existence of the list
+    if (collabTask?.id) {
+      const action = isListInTask(collabTask) ? "disconnect" : "connect";
+      data = {
+        list: {
+          [action]: {
+            id: listID,
+          },
+        },
+      };
+      result = await prisma.collabTasks.update({
+        where: {
+          id: taskId,
+          userId: session.user.id,
+        },
+        data,
+      });
+    }
+
+    if (todoTask?.id) {
+      const action = isListInTask(todoTask) ? "disconnect" : "connect";
+
+      data = {
+        list: {
+          [action]: {
+            id: listID,
+          },
+        },
+      };
+
+      result = await prisma.task.update({
+        where: {
+          id: taskId,
+          userId: session.user.id,
+        },
+        data,
+      });
+    }
+
+    return result; // Optionally return some result
   } catch (error) {
     console.log(error);
   }

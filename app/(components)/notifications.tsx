@@ -6,20 +6,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Bell } from "lucide-react";
-import React, {
-  ReactElement,
-  ReactHTMLElement,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { getPendingTasks, viewedNotifications } from "../actions/data";
 
 import NotificationItem from "./notificationItem";
-import { cn } from "@/lib/utils";
+import { Bounce, toast } from "react-toastify";
 
 export default function Notifications() {
   const { data, error, isSuccess } = useQuery({
@@ -29,29 +27,33 @@ export default function Notifications() {
   const { mutate, data: mutationData } = useMutation({
     mutationFn: (id: string) => viewedNotifications(id),
   });
-  const queryClient = new QueryClient();
+  const queryClient = useQueryClient();
 
   const [taskIds, setTaskIds] = useState<string[]>([]);
 
+  console.log("task ids", taskIds);
+
   const handleTaskInView = (id: string) => {
     if (!taskIds.includes(id)) {
-      setTaskIds((prevIds) => [...prevIds, id]); // Add task ID if not already present
+      setTaskIds((prevIds) => {
+        const updatedTaskIds = [...prevIds, id]; // Add task ID if not already present
+        console.log("renders handleTaskInView Function");
 
-      if (taskIds) {
-        taskIds.map((taskId: string) => {
-          mutate(taskId, {
+        // Iterate through the updated task IDs
+        updatedTaskIds.forEach((id) => {
+          mutate(id, {
             onSuccess: () => {
-              console.log("successfully changed state notification");
               queryClient.invalidateQueries({
                 exact: true,
                 queryKey: ["pendings"],
-                type: "active",
               });
             },
-            onError: () => console.log("something went wrong"),
+            onError: () => console.log(`Something went wrong with task ${id}`),
           });
         });
-      }
+
+        return updatedTaskIds; // Ensure taskIds state is updated correctly
+      });
     }
   };
 
@@ -90,7 +92,7 @@ export default function Notifications() {
                 <NotificationItem
                   key={item.id}
                   item={item}
-                  onTaskInView={handleTaskInView}
+                  onTaskInView={() => handleTaskInView(item.id)}
                   countUnreadNotification={data.countViewedTasks}
                 />
               ))

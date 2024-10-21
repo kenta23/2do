@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Bell, Search as SearchIcon } from "lucide-react";
+import { Bell, LogOut, Search as SearchIcon } from "lucide-react";
 import { AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { Popover } from "@/components/ui/popover";
@@ -30,7 +30,7 @@ export default function Search({ user }: { user: User }) {
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search"
-            className="pl-10 w-[536px] outline-none border border-lightColor focus:ring-2 focus:ring-lightColor focus:border-lightColor"
+            className="pl-10 w-[200px] md:w-full outline-none border border-lightColor focus:ring-2 focus:ring-lightColor focus:border-lightColor"
             width={500}
           />
         </div>
@@ -58,7 +58,11 @@ export default function Search({ user }: { user: User }) {
                 align="start"
                 side="bottom"
               >
-                <button className="" onClick={signOutFn}>
+                <button
+                  className="px-3 rounded-lg shadow-md py-1 flex gap-3 items-center"
+                  onClick={signOutFn}
+                >
+                  <LogOut size={18} />
                   <span>Log out</span>
                 </button>
               </PopoverContent>

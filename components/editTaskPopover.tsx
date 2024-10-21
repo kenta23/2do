@@ -18,6 +18,9 @@ import { editTask, getSingleTask } from "@/app/actions/data";
 import { usePathname } from "next/navigation";
 import { editFormData, editSchemawithID } from "@/lib/schema";
 import { TaskOrCollabTask, TaskType } from "@/types";
+import AddcollabUsers from "./AddcollabUsers";
+import { useDebounce } from "use-debounce";
+import { useFetchUserIds } from "@/lib/queries";
 
 export default function EditTaskPopover({
   taskId,
@@ -50,12 +53,24 @@ export default function EditTaskPopover({
     },
   });
 
+  //users searching
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [listFiles, setListFiles] = useState<File[] | null>([]);
   const [storeDueDate, setStoreDueDate] = useState<Date | Dayjs | null>(null);
   const pathName = usePathname();
   const [status, setStatus] = useState<boolean>(false);
+
+  const [text, setText] = useState<string>("");
+  const [debouncedText] = useDebounce(text, 1000);
+  const [userIds, setUserIds] = useState<
+    { id: string; image: string | null; name: string | null }[]
+  >([]);
+  // const [displayUser, setDisplayUser] = useState<boolean>(false);
+  // const containerUsers = useRef<HTMLDivElement>(null);
+
+  // //real time user suggestion searching
+  const { data: users, error: usersError } = useFetchUserIds(debouncedText);
 
   useEffect(() => {
     let timeoutId: number | NodeJS.Timeout;
@@ -270,8 +285,9 @@ export default function EditTaskPopover({
       <div className="mt-4 flex flex-col items-start gap-3">
         {listFiles?.map((file, i) => (
           <div key={i} className="flex items-center gap-2">
-            <p>{file?.name}</p>
+            <p className="text-sm">{file?.name}</p>
             <X
+              size={18}
               className="cursor-pointer"
               onClick={() =>
                 setListFiles((prev: any) =>
@@ -283,6 +299,17 @@ export default function EditTaskPopover({
         ))}
       </div>
 
+      {/* IF ITS IN THE COLLABORATION PAGE THEN DISPLAY THIS FORM */}
+      {pathName === "/collaborations" && (
+        <AddcollabUsers
+          users={users}
+          userIds={userIds}
+          setUserIds={setUserIds}
+          text={text}
+          setText={setText}
+          debouncedText={debouncedText}
+        />
+      )}
       <Button
         type="submit"
         disabled={isPending}

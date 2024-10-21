@@ -1,38 +1,9 @@
-import EditTaskPopover from "@/components/editTaskPopover";
-import { listStyles } from "@/components/TaskList";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { CollabTasksType, TaskOrCollabTask, TaskType } from "@/types";
 import { QueryClient } from "@tanstack/query-core";
-import {
-  Bell,
-  Clock3,
-  EllipsisVertical,
-  Pencil,
-  Plus,
-  Star,
-  Trash,
-} from "lucide-react";
+import { Bell, Clock3 } from "lucide-react";
 import React, { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { deleteSingleTask } from "@/app/actions/data";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import AddListPopover from "@/components/addListPopover";
-import { getLists } from "@/app/actions/lists";
+
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { basicInfoUser } from "./page";
@@ -100,6 +71,7 @@ export default function CollabTaskItem({
 
           {/* FOOTLONG OPTIONS */}
           <TaskOptions
+            pathname={pathname}
             deleteTask={() =>
               deleteTask(task.id, deleteMutation, querykey, queryClient)
             }

@@ -102,7 +102,7 @@ model CollabTasks {
   userId      String
 
   owner        User          @relation(fields: [userId], references: [id])
-  lists        List[]        @relation("CollabTasksToList")
+  list         List[]        @relation("CollabTasksToList")
   pendingTasks PendingTask[]
 }
 

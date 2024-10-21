@@ -26,7 +26,7 @@ export const Taskschema = z.object({
     .nullable()
     .optional()
     .refine((value) => (value ? value.getTime() >= dayjs().valueOf() : true), {
-      message: "The Date should be in today or later",
+      message: "The Remind Date should be in today or later",
       path: ["remindme"],
     }),
 });
