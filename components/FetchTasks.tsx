@@ -17,6 +17,9 @@ import { deleteSingleTask } from "@/app/actions/data";
 import { Clock3 } from "lucide-react";
 import TaskOptions from "./TaskOptions";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Sheet, SheetTrigger } from "./ui/sheet";
+import { Button } from "./ui/button";
+import ViewTask from "./ViewTask";
 
 export default function FetchTasks() {
   // add a data props here
@@ -98,7 +101,7 @@ export default function FetchTasks() {
                       editTaskVariables.map((task) =>
                         task.id === item.id ? (
                           <li
-                            className="min-w-min px-4 py-4 rounded-full bg-white opacity-50"
+                            className="min-w-min px-4 py-4 cursor-pointer rounded-full bg-white opacity-50"
                             key={task.id}
                           >
                             <div className="flex justify-between items-center gap-2 w-full">
@@ -180,17 +183,22 @@ function TaskItem({
   });
 
   return (
-    <li className="min-w-min px-4 py-4 rounded-full bg-white">
-      <div className="flex justify-between items-center gap-2 w-full">
-        <div className="flex gap-2 items-center">
-          <input type="radio" name="checktask" id="" />
-          <p>{task.content}</p>
-        </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <li
+          onClick={() => console.log("clicked!")}
+          className="min-w-min cursor-pointer px-4 py-4 rounded-full bg-white"
+        >
+          <div className="flex justify-between items-center gap-2 w-full">
+            <div className="flex gap-2 items-center">
+              <input type="radio" name="checktask" id="" />
+              <p>{task.content}</p>
+            </div>
 
-        <div className="flex gap-3 items-center">
-          {pathname !== "/todo" && (
-            <div className="max-w-[190px] w-auto">
-              {/* {users?.map((user) => (
+            <div className="flex gap-3 items-center">
+              {pathname !== "/todo" && (
+                <div className="max-w-[190px] w-auto">
+                  {/* {users?.map((user) => (
                   <Image
                     key={user.id}
                     src={user.image ?? "/Logo.png"}
@@ -200,38 +208,42 @@ function TaskItem({
                     className="rounded-full border-yellow-500 border-[1px]"
                   />
                 ))} */}
-            </div>
-          )}
+                </div>
+              )}
 
-          {task.duedate && (
-            <div className="flex border-[#B27C2A] border-[1px] p-1 rounded-full items-center gap-1">
-              <Clock3 color="#B27C2A" size={14} />
-              <p className="ml-1 text-[#B27C2A] text-[12px]">
-                {task?.duedate
-                  ? new Intl.DateTimeFormat("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                    }).format(new Date(task.duedate))
-                  : ""}
-              </p>
-            </div>
-          )}
+              {task.duedate && (
+                <div className="flex border-[#B27C2A] border-[1px] p-1 rounded-full items-center gap-1">
+                  <Clock3 color="#B27C2A" size={14} />
+                  <p className="ml-1 text-[#B27C2A] text-[12px]">
+                    {task?.duedate
+                      ? new Intl.DateTimeFormat("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                        }).format(new Date(task.duedate))
+                      : ""}
+                  </p>
+                </div>
+              )}
 
-          {/* FOOTLONG OPTIONS */}
-          <TaskOptions
-            deleteTask={() =>
-              deleteTask(task.id, deleteMutation, querykey, queryClient)
-            }
-            querykey={querykey}
-            pathname={pathname}
-            taskId={task.id}
-          />
-        </div>
-      </div>
-    </li>
+              {/* FOOTLONG OPTIONS */}
+              <TaskOptions
+                deleteTask={() =>
+                  deleteTask(task.id, deleteMutation, querykey, queryClient)
+                }
+                querykey={querykey}
+                pathname={pathname}
+                taskId={task.id}
+              />
+            </div>
+          </div>
+        </li>
+      </SheetTrigger>
+
+      <ViewTask taskId={task.id} />
+    </Sheet>
   );
 }
 
@@ -335,3 +347,5 @@ function CollabTaskItem({
     </li>
   );
 }
+
+function TaskView() {}

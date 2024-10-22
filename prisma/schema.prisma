@@ -68,6 +68,7 @@ model Task {
   id        String    @id @default(cuid())
   userId    String
   content   String
+  files     String[]
   important Boolean   @default(false)
   remind_me DateTime?
   completed Boolean   @default(false)
@@ -92,6 +93,7 @@ model List {
 model CollabTasks {
   id          String    @id @default(cuid())
   content     String
+  files       String[]
   important   Boolean   @default(false)
   remind_me   DateTime?
   completed   Boolean   @default(false)

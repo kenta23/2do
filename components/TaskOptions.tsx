@@ -80,7 +80,7 @@ export default function TaskOptions({
 
   return (
     <Popover onOpenChange={() => setOpen((prev) => !prev)} open={open}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger onClick={(e) => e.stopPropagation()} asChild>
         <EllipsisVertical
           onClick={async () =>
             await queryClient.refetchQueries({
@@ -98,7 +98,7 @@ export default function TaskOptions({
         align="start"
         sideOffset={10}
       >
-        <div className="bg-white">
+        <div onClick={(e) => e.stopPropagation()} className="bg-white">
           <ul className="flex flex-col space-y-1 items-start w-full">
             <li className={listStyles}>
               <Popover>
@@ -176,7 +176,10 @@ export default function TaskOptions({
 
             <li className={listStyles}>
               <Popover>
-                <PopoverTrigger className="w-full border-none outline-none">
+                <PopoverTrigger
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full border-none outline-none"
+                >
                   <div className="flex gap-2">
                     <Plus size={22} />
                     <p>Add to</p>

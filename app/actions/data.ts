@@ -107,9 +107,9 @@ export async function createMyTask(
       }
     }
     console.log("NEW TASK SAVED", newCollabTasks);
-    revalidatePath("/collaborations");
+    return newCollabTasks;
   }
-  return;
+  return newData;
 }
 
 export async function getTask(pathname: string) {

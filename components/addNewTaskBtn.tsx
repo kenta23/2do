@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CalendarClock, Paperclip, Plus, X } from "lucide-react";
+import { Bell, CalendarClock, Files, Paperclip, Plus, X } from "lucide-react";
 import React, { ReactElement, useEffect, useRef, useState } from "react";
 import {
   Popover,
@@ -21,6 +21,13 @@ import { TaskType } from "@/types";
 import AddcollabUsers from "./AddcollabUsers";
 import { useFetchUserIds } from "@/lib/queries";
 import { ErrorMessage } from "@hookform/error-message";
+import { createClient } from "@supabase/supabase-js";
+import { storeFiles } from "@/app/actions/files";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function AddNewTaskBtn() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +63,14 @@ export default function AddNewTaskBtn() {
   });
 
   //api call for post request to server
-  const { error, mutate, isPending, isSuccess, reset } = useMutation({
+  const {
+    error,
+    data: mutationData,
+    mutate,
+    isPending,
+    isSuccess,
+    reset,
+  } = useMutation({
     mutationFn: async (datas: FormData) =>
       await createMyTask(datas, pathname, users),
     mutationKey: ["addNewTodo"],
@@ -88,17 +102,29 @@ export default function AddNewTaskBtn() {
       queryClient.invalidateQueries({
         queryKey: ["todos"],
       });
-
-      // if (pathname === "/collaborations") {
-      //   queryClient.invalidateQueries({
-      //     queryKey: ["yourTasks"],
-      //   });
-      //   queryClient.invalidateQueries({
-      //     queryKey: ["assignedTasks"],
-      //   });
-      // }
     },
   });
+
+  async function uploadFile(taskId = mutationData?.id, file = listFiles) {
+    if (file) {
+      file.forEach(async (f, i) => {
+        const { data, error } = await supabase.storage
+          .from("2do files")
+          .upload(`${taskId}/${f.name}`, f, {
+            upsert: false,
+            headers: { "x-goog-acl": "public-read" },
+          });
+
+        //save it to the database
+        if (!error && data) {
+          const { data: filename } = supabase.storage
+            .from("2do files")
+            .getPublicUrl(`${data.fullPath}`);
+          const store = storeFiles(taskId as string, [...filename.publicUrl]);
+        }
+      });
+    }
+  }
 
   const onSubmit: SubmitHandler<FormData> = (data: FormData) => {
     console.log("SUBMITTED DATA", data);
@@ -112,6 +138,10 @@ export default function AddNewTaskBtn() {
         setTimeout(() => {
           reset(); //mutation reset.
         }, 2000);
+
+        if (listFiles) {
+          uploadFile(mutationData?.id);
+        }
       },
       onError: (err) => console.log(err),
     });

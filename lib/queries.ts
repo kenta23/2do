@@ -2,6 +2,7 @@ import {
   deleteSingleTask,
   fetchAssignedTasks,
   fetchYourTasksTodos,
+  getSingleTask,
   getTask,
   suggestedUsers,
 } from "@/app/actions/data";
@@ -132,5 +133,12 @@ export const useFetchUserIds = (debouncedText: string) => {
     queryKey: ["usersearch"],
     queryFn: async () => await suggestedUsers(debouncedText),
     staleTime: Infinity,
+  });
+};
+
+export const useGetSingleTask = (id: string) => {
+  return useQuery({
+    queryKey: ["singleTask", id],
+    queryFn: () => getSingleTask(id),
   });
 };
