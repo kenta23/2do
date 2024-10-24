@@ -20,34 +20,40 @@ import { Input } from "@/components/ui/input";
 import AddNewList from "./addNewList";
 import Lists from "./lists";
 
-const listItems: Array<{
+export const listItems: Array<{
   id: number;
-  name: string;
+  url: string;
+  label: string;
   icon: JSX.Element;
 }> = [
   {
     id: 1,
-    name: "My day",
+    label: "My day",
+    url: "/todo",
     icon: <Sun size={26} />,
   },
   {
     id: 2,
-    name: "Planned",
+    label: "Planned",
+    url: "/planned",
     icon: <NotepadText size={26} />,
   },
   {
     id: 3,
-    name: "Important",
+    label: "Important",
+    url: "/important",
     icon: <Star size={26} />,
   },
   {
     id: 4,
-    name: "Collaborative Tasks",
+    label: "My day",
+    url: "/collaborations",
     icon: <UsersRound size={26} />,
   },
   {
     id: 5,
-    name: "Business",
+    label: "Work",
+    url: "/",
     icon: <BriefcaseBusiness size={26} />,
   },
 ];

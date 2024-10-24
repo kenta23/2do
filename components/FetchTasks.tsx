@@ -2,12 +2,10 @@
 
 import { ContextProvider } from "@/providers/ContextProvider";
 import React, { useContext } from "react";
-import { usePathname } from "next/navigation";
 import { CollabTasksType, TaskOrCollabTask, TaskType } from "@/types";
 import {
   useMutation,
   useMutationState,
-  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { basicInfoUser } from "@/app/(components)/collaborations/page";
@@ -18,7 +16,6 @@ import { Clock3 } from "lucide-react";
 import TaskOptions from "./TaskOptions";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Sheet, SheetTrigger } from "./ui/sheet";
-import { Button } from "./ui/button";
 import ViewTask from "./ViewTask";
 
 export default function FetchTasks() {

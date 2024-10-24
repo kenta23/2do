@@ -99,7 +99,7 @@ export const deleteTask = (
   }
 };
 
-export const useFindListQuery = async (listId: string, taskId: string) => {
+export const useFindListQuery = (listId: string, taskId: string) => {
   return useQuery({
     queryFn: async () => await IsInList(listId, taskId),
     queryKey: ["isInList", listId],

@@ -26,7 +26,7 @@ import { storeFiles } from "@/app/actions/files";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY!
 );
 
 export default function AddNewTaskBtn() {
@@ -105,22 +105,45 @@ export default function AddNewTaskBtn() {
     },
   });
 
-  async function uploadFile(taskId = mutationData?.id, file = listFiles) {
+  async function uploadFile(taskId: string, file = listFiles) {
     if (file) {
       file.forEach(async (f, i) => {
+        // Check if the file already exists in the folder
+        const { data: existingFile, error: checkError } = await supabase.storage
+          .from("2do files")
+          .list(taskId, { search: `${f.name}` });
+
+        //check the folder
+        const { data: existingFolder, error: errorCheck } =
+          await supabase.storage.from("2do files").exists(taskId.toString());
+
+        console.log("EXISTED FOLDER", existingFolder);
+
+        let fileName = f.name;
+
+        if (existingFile && existingFile.length > 0) {
+          const fileExtension = fileName.split(".").pop();
+          const baseFileName = fileName.substring(0, fileName.lastIndexOf("."));
+          const timestamp = new Date().getTime();
+          fileName = `${baseFileName}_${timestamp}.${fileExtension}`;
+        }
+
         const { data, error } = await supabase.storage
           .from("2do files")
-          .upload(`${taskId}/${f.name}`, f, {
-            upsert: false,
-            headers: { "x-goog-acl": "public-read" },
-          });
+          .upload(`${taskId}/${f.name}`, f);
 
+        console.log("FILESSS", data);
+
+        if (error) {
+          console.log(error);
+        }
         //save it to the database
         if (!error && data) {
-          const { data: filename } = supabase.storage
+          const { data: filename } = await supabase.storage
             .from("2do files")
-            .getPublicUrl(`${data.fullPath}`);
-          const store = storeFiles(taskId as string, [...filename.publicUrl]);
+            .getPublicUrl(`${data.path}`);
+          const store = storeFiles(taskId as string, filename.publicUrl);
+          console.log(store);
         }
       });
     }
@@ -130,17 +153,16 @@ export default function AddNewTaskBtn() {
     console.log("SUBMITTED DATA", data);
 
     mutate(data, {
-      onSuccess: () => {
-        console.log("SUCCESSFULLY SAVED DATA");
-        resetValues();
+      onSuccess: (data) => {
         setUserIds([]);
 
         setTimeout(() => {
           reset(); //mutation reset.
+          resetValues();
         }, 2000);
 
-        if (listFiles) {
-          uploadFile(mutationData?.id);
+        if (data && listFiles) {
+          uploadFile(data.id as string);
         }
       },
       onError: (err) => console.log(err),

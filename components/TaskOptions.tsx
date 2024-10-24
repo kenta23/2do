@@ -83,7 +83,7 @@ export default function TaskOptions({
       <PopoverTrigger onClick={(e) => e.stopPropagation()} asChild>
         <EllipsisVertical
           onClick={async () =>
-            await queryClient.refetchQueries({
+            await queryClient.prefetchQuery({
               queryKey: ["singleTask", taskId],
             })
           }

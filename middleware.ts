@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { request } from "http";
 import { auth } from "./auth";
 
 export default auth((req) => {

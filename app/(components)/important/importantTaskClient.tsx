@@ -27,7 +27,7 @@ export default function ImportantTaskClient() {
     <ContextProvider.Provider
       value={{ tasks, queryKey: "important", pathname }}
     >
-      <FetchTasks data={tasks} users={null} />
+      <FetchTasks />
     </ContextProvider.Provider>
   );
 }

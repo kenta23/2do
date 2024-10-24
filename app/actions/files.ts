@@ -1,12 +1,12 @@
 "use server";
 
 import { auth } from "@/auth";
-import { PrismaClient } from "@prisma/client/edge";
+import { PrismaClient } from "@prisma/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
 const prisma = new PrismaClient().$extends(withAccelerate());
 
-export async function storeFiles(taskId: string, fileUrl: string[]) {
+export async function storeFiles(taskId: string, fileUrl: string) {
   const user = await auth();
 
   // Find user by id
@@ -31,7 +31,7 @@ export async function storeFiles(taskId: string, fileUrl: string[]) {
       where: { id: taskId, userId: userFromDb.id },
       data: {
         files: {
-          push: fileUrl,
+          push: fileUrl.toString(),
         },
       },
     });
@@ -46,11 +46,12 @@ export async function storeFiles(taskId: string, fileUrl: string[]) {
       where: { id: taskId, userId: userFromDb.id },
       data: {
         files: {
-          push: fileUrl,
+          push: fileUrl.toString(),
         },
       },
     });
   }
 
+  console.log("FILE STORED TO THE DATABASE");
   return data;
 }

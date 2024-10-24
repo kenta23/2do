@@ -1,6 +1,6 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client/edge";
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import dayjs from "dayjs";
 import { withAccelerate } from "@prisma/extension-accelerate";

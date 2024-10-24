@@ -49,10 +49,7 @@ export default async function ReactQueryProvider({
   ]);
 
   return (
-    <HydrationBoundary
-      options={{ defaultOptions: { queries: {} } }}
-      state={dehydrate(queryClient)}
-    >
+    <HydrationBoundary state={dehydrate(queryClient)}>
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </HydrationBoundary>

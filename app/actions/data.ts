@@ -1,6 +1,6 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client/edge";
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import dayjs from "dayjs";
 import { withAccelerate } from "@prisma/extension-accelerate";
@@ -54,10 +54,11 @@ export async function createMyTask(
           remindme !== null || undefined ? dayjs(remindme).toDate() : null,
       },
     });
-
-    console.log("NEW TASK SAVED", newData);
-    revalidatePath("/todo");
+    // revalidatePath("/todo");
   }
+
+  console.log("NEW TASK SAVED", newData);
+
   if (pathname === "/collaborations") {
     //add the user id if the invited user accepted the task
     //const userIds = users?.map((user) => user.id);
@@ -223,7 +224,7 @@ export async function getSingleTask(taskId: string) {
   }
 
   try {
-    const newHeaders = headers();
+    const newHeaders = await headers();
     const pathname = new URL(newHeaders.get("referer") || "").pathname;
 
     console.log("MY PATHNAME", pathname);
@@ -333,7 +334,7 @@ export async function deleteSingleTask(taskId: string, pathname: string) {
       });
 
       console.log("DELETED todo task");
-      revalidatePath("/planned");
+      // revalidatePath("/planned");
       return data;
     }
   } catch (error) {
@@ -355,7 +356,7 @@ export async function fetchPlannedTodos() {
       where: { userId: session.user.id },
     });
 
-    revalidatePath("/planned");
+    // revalidatePath("/planned");
 
     return data;
   } catch (error) {
