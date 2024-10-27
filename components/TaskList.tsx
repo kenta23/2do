@@ -6,7 +6,7 @@ import { CollabTasksType, TaskOrCollabTask, TaskType } from "@/types";
 import { useMutationState } from "@tanstack/react-query";
 import TaskItem from "@/app/(components)/taskItem";
 import { basicInfoUser } from "@/app/(components)/collaborations/page";
-import CollabTaskItem from "@/app/(components)/collaborations/collabTaskItems";
+import CollabTaskItem from "@/components/collabTaskItems";
 
 export const listStyles = `flex gap-3 cursor-pointer hover:bg-secondaryColor 
        rounded-md hover:text-white duration-200 ease-in-out active:bg-secondaryColor w-full p-1 items-center`;

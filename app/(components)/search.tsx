@@ -30,7 +30,7 @@ export default function Search({ user }: { user: User }) {
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search"
-            className="pl-10 w-[200px] md:w-full outline-none border border-lightColor focus:ring-2 focus:ring-lightColor focus:border-lightColor"
+            className="pl-10 w-[200px] md:w-[400px] outline-none border border-lightColor focus:ring-2 focus:ring-lightColor focus:border-lightColor"
             width={500}
           />
         </div>

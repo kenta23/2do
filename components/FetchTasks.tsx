@@ -14,7 +14,12 @@ import Image from "next/image";
 import { deleteSingleTask } from "@/app/actions/data";
 import { Clock3 } from "lucide-react";
 import TaskOptions from "./TaskOptions";
-import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import ViewTask from "./ViewTask";
 
@@ -52,7 +57,7 @@ export default function FetchTasks() {
   });
 
   return (
-    <div className="relative max-h-[600px] h-full">
+    <div className="relative md:max-h-[600px] h-full">
       {/* IF THERE IS EXISTED TASKS */}
       {data ? (
         <div className="mx-3 md:mx-8 mt-10 max-h-[520px] mb-6 overflow-y-auto w-full md:max-w-[680px]">
@@ -193,21 +198,6 @@ function TaskItem({
             </div>
 
             <div className="flex gap-3 items-center">
-              {pathname !== "/todo" && (
-                <div className="max-w-[190px] w-auto">
-                  {/* {users?.map((user) => (
-                  <Image
-                    key={user.id}
-                    src={user.image ?? "/Logo.png"}
-                    alt="user avatar"
-                    width={30}
-                    height={100}
-                    className="rounded-full border-yellow-500 border-[1px]"
-                  />
-                ))} */}
-                </div>
-              )}
-
               {task.duedate && (
                 <div className="flex border-[#B27C2A] border-[1px] p-1 rounded-full items-center gap-1">
                   <Clock3 color="#B27C2A" size={14} />
@@ -278,70 +268,77 @@ function CollabTaskItem({
   });
 
   return (
-    <li className="min-w-min px-4 py-4 rounded-full bg-white">
-      <div className="flex justify-between items-center gap-2 w-full">
-        <div className="flex gap-2 items-center">
-          <input type="radio" name="checktask" id="" />
-          <p>{task.content}</p>
-        </div>
-
-        <div className="max-w-[190px] w-auto">
-          {users &&
-            users.slice(0, 4).map((user) => (
-              <TooltipProvider key={user.id}>
-                <TooltipTrigger className="cursor-pointer">
-                  <Image
-                    key={user.id}
-                    src={user.image ?? "/Logo.png"}
-                    alt="user avatar"
-                    width={30}
-                    height={100}
-                    className="rounded-full cursor-pointer border-yellow-500 border-[1px]"
-                  />
-                  <TooltipContent className="text-black">
-                    {user.name}
-                  </TooltipContent>
-                </TooltipTrigger>
-              </TooltipProvider>
-            ))}
-
-          {users && users?.length > 4 && (
-            <div className="border-yellow-500 border-[1px] rounded-full size-[30px] flex items-center justify-center">
-              +{users.length - 4}
+    <Sheet>
+      <SheetTrigger asChild>
+        <li className="min-w-min cursor-pointer px-4 py-4 rounded-full bg-white">
+          <div className="flex justify-between items-center gap-2 w-full">
+            <div className="flex gap-2 items-center">
+              <input type="radio" name="checktask" id="" />
+              <p>{task.content}</p>
             </div>
-          )}
-        </div>
 
-        <div className="flex gap-2 items-center">
-          {task.duedate && (
-            <div className="flex border-[#B27C2A] border-[1px] p-1 rounded-full items-center gap-1">
-              <Clock3 color="#B27C2A" size={14} />
-              <p className="ml-1 text-[#B27C2A] text-[12px]">
-                {task?.duedate
-                  ? new Intl.DateTimeFormat("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                    }).format(new Date(task.duedate))
-                  : ""}
-              </p>
+            <div className="max-w-[190px] w-auto">
+              {users &&
+                users.slice(0, 4).map((user) => (
+                  <TooltipProvider key={user.id}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-pointer">
+                        <Image
+                          key={user.id}
+                          src={user.image ?? "/Logo.png"}
+                          alt="user avatar"
+                          width={30}
+                          height={100}
+                          className="rounded-full cursor-pointer border-yellow-500 border-[1px]"
+                        />
+                        <TooltipContent className="text-black">
+                          {user.name}
+                        </TooltipContent>
+                      </TooltipTrigger>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+
+              {users && users?.length > 4 && (
+                <div className="border-yellow-500 border-[1px] rounded-full size-[30px] flex items-center justify-center">
+                  +{users.length - 4}
+                </div>
+              )}
             </div>
-          )}
 
-          {/* FOOTLONG OPTIONS */}
-          <TaskOptions
-            deleteTask={() =>
-              deleteTask(task.id, deleteMutation, querykey, queryClient)
-            }
-            querykey={querykey}
-            pathname={pathname}
-            taskId={task.id}
-          />
-        </div>
-      </div>
-    </li>
+            <div className="flex gap-2 items-center">
+              {task.duedate && (
+                <div className="flex border-[#B27C2A] border-[1px] p-1 rounded-full items-center gap-1">
+                  <Clock3 color="#B27C2A" size={14} />
+                  <p className="ml-1 text-[#B27C2A] text-[12px]">
+                    {task?.duedate
+                      ? new Intl.DateTimeFormat("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                        }).format(new Date(task.duedate))
+                      : ""}
+                  </p>
+                </div>
+              )}
+
+              {/* FOOTLONG OPTIONS */}
+              <TaskOptions
+                deleteTask={() =>
+                  deleteTask(task.id, deleteMutation, querykey, queryClient)
+                }
+                querykey={querykey}
+                pathname={pathname}
+                taskId={task.id}
+              />
+            </div>
+          </div>
+        </li>
+      </SheetTrigger>
+      <ViewTask taskId={task.id} />
+    </Sheet>
   );
 }
 

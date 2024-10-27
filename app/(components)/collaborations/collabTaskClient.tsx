@@ -5,7 +5,6 @@ import React from "react";
 import Image from "next/image";
 import { fetchAssignedTasks, fetchYourTasksTodos } from "@/app/actions/data";
 import { Metadata } from "next";
-import TaskList from "@/components/TaskList";
 import {
   useFetchAssignedTask,
   useFetchYourTasks,

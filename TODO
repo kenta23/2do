@@ -20,3 +20,5 @@ Todo:
   ☐ Add the completed function when tasks are completed 
   ✔ Display collaborative users on collab task items @done(24-10-21 12:28)
   ✔ fix the notification unread to read function @done(24-10-21 12:28)
+  ☐ add the display files, edit files and delete function 
+  ☐ render the existing files on the editTaskPopover and append the new files to them.

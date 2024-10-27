@@ -11,7 +11,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import AddListPopover from "./addListPopover";
-import { listStyles } from "./TaskList";
+import { listStyles } from "@/lib/utils";
 import EditTaskPopover from "./editTaskPopover";
 import {
   AlertDialog,

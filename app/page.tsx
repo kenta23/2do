@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const user = await auth();
 
   console.log("user", user);
-  return <h1>Hello world</h1>;
-  // return data ? redirect("/todo") : redirect("/sign-in");
+
+  return user ? redirect("/todo") : redirect("/sign-in");
 }

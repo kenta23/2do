@@ -21,6 +21,7 @@ import { TaskOrCollabTask, TaskType } from "@/types";
 import AddcollabUsers from "./AddcollabUsers";
 import { useDebounce } from "use-debounce";
 import { useFetchUserIds } from "@/lib/queries";
+import Image from "next/image";
 
 export default function EditTaskPopover({
   taskId,
@@ -29,12 +30,13 @@ export default function EditTaskPopover({
   taskId: string;
   querykey: string;
 }) {
+  //GETTING THE SINGLE TASK QUERY HERE
   const { data: taskValue } = useQuery({
     queryKey: ["singleTask", taskId],
     queryFn: () => getSingleTask(taskId),
   });
 
-  const dueDate = dayjs(taskValue?.duedate);
+  const dueDate = dayjs(taskValue?.data?.duedate);
 
   const {
     register,
@@ -48,7 +50,7 @@ export default function EditTaskPopover({
     resolver: zodResolver(editSchemawithID),
     defaultValues: {
       id: taskId,
-      content: taskValue?.content,
+      content: taskValue?.data?.content,
       duedate: new Date(dueDate.format("MM/DD/YYYY hh:mm aa")) || new Date(),
     },
   });
@@ -86,15 +88,18 @@ export default function EditTaskPopover({
 
   useEffect(() => {
     if (taskValue) {
-      reset({ content: taskValue?.content, duedate: taskValue.duedate });
+      reset({
+        content: taskValue?.data?.content,
+        duedate: taskValue.data?.duedate,
+      });
     }
 
-    if (taskValue?.duedate) {
-      setStoreDueDate(dayjs(taskValue.duedate));
+    if (taskValue?.data?.duedate) {
+      setStoreDueDate(dayjs(taskValue.data?.duedate));
     }
 
-    if (taskValue?.id) {
-      setValue("id", taskValue?.id);
+    if (taskValue?.data?.id) {
+      setValue("id", taskValue?.data?.id);
     }
   }, [taskId, reset, taskValue, setValue]);
 
@@ -211,6 +216,13 @@ export default function EditTaskPopover({
     setListFiles((prev) => [...(prev ?? []), ...newFiles]);
   };
 
+  const handleFileDelete = async (index: number) => {
+    try {
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <form className="h-full w-full" onSubmit={submit(submitData)}>
       {isSuccess && <p className="text-green-500">Successfully Edited task</p>}
@@ -225,7 +237,7 @@ export default function EditTaskPopover({
           type="text"
           className="border-b w-full border-b-lightColor flex-1 focus:ring-0 focus:outline-none"
           placeholder="Edit Task"
-          defaultValue={taskValue?.content ?? ""}
+          defaultValue={taskValue?.data?.content ?? ""}
           {...register("content")}
         />
         {errors.content && (
@@ -283,6 +295,54 @@ export default function EditTaskPopover({
 
       {/* FILE UPLOADING LISTED */}
       <div className="mt-4 flex flex-col items-start gap-3">
+        {taskValue?.data?.files.map((file, _index) => {
+          const fileExtension = file.split(".").pop()?.toLowerCase();
+          const isImage = ["jpg", "jpeg", "png", "gif"].includes(
+            fileExtension || ""
+          );
+
+          return (
+            <div key={_index} className="flex items-center gap-2">
+              {isImage ? (
+                <div className="w-auto h-auto relative p-1">
+                  <Image
+                    className="border-[1px] border-gray-200 "
+                    width={50}
+                    quality={100}
+                    objectFit="cover"
+                    height={100}
+                    alt="Photo"
+                    src={file}
+                    loading="lazy"
+                  />
+                  <X
+                    size={16}
+                    className="absolute right-0 -top-2 cursor-pointer"
+                    onClick={() => handleFileDelete(_index)}
+                  />
+                </div>
+              ) : (
+                <div className="w-auto h-auto relative p-1">
+                  <Image
+                    className="border-[1px] border-gray-200 "
+                    width={50}
+                    quality={100}
+                    objectFit="cover"
+                    height={100}
+                    alt="Photo"
+                    src={"/document-icon.png"}
+                    loading="lazy"
+                  />
+                  <X
+                    size={16}
+                    className="absolute right-0 -top-2 cursor-pointer"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+
         {listFiles?.map((file, i) => (
           <div key={i} className="flex items-center gap-2">
             <p className="text-sm">{file?.name}</p>

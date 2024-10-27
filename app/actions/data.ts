@@ -227,29 +227,31 @@ export async function getSingleTask(taskId: string) {
     const newHeaders = await headers();
     const pathname = new URL(newHeaders.get("referer") || "").pathname;
 
-    console.log("MY PATHNAME", pathname);
-
     let data;
+    let users;
 
     if (pathname === "/collaborations") {
       data = await prisma.collabTasks.findFirst({
-        where: { id: taskId as string, userId: session.user.id },
-        cacheStrategy: {
-          ttl: 30,
-          swr: 60,
-        },
+        where: { id: taskId as string },
       });
+
+      if (data?.joinedUsers.length) {
+        users = await prisma.user.findMany({
+          where: {
+            id: {
+              in: data.joinedUsers,
+            },
+          },
+          select: { id: true, name: true, image: true },
+        });
+      }
     } else {
       data = await prisma.task.findFirst({
         where: { id: taskId as string, userId: session.user.id },
-        cacheStrategy: {
-          ttl: 30,
-          swr: 60,
-        },
       });
     }
 
-    return data;
+    return { data, users };
   } catch (error) {
     console.log(error);
     return;
@@ -297,8 +299,7 @@ export async function deleteSingleTask(taskId: string, pathname: string) {
         where: { id: taskId as string, userId: session.user.id },
       });
       console.log("DELETED collab task");
-    }
-    if (pathname.includes("/lists")) {
+    } else if (pathname.includes("/lists")) {
       //find the task id whether from the tasks or collab tasks
       const taskFound =
         (await prisma.task.findFirst({
@@ -334,7 +335,7 @@ export async function deleteSingleTask(taskId: string, pathname: string) {
       });
 
       console.log("DELETED todo task");
-      // revalidatePath("/planned");
+
       return data;
     }
   } catch (error) {
@@ -607,4 +608,31 @@ export async function acceptedTask(id: string) {
   }
 
   return;
+}
+
+//delete files
+async function deleteOneFile(index: string | number, taskId: string) {
+  const session = await auth();
+
+  // Check if user is authenticated
+  if (!session?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  //find user by id
+  const userFromDb = await prisma.user.findFirst({
+    select: { id: true }, // Ensure you're fetching the `id` (which is the actual primary key)
+    where: { id: session.user.id }, // Assuming `userId` is the identifier
+  });
+
+  //update the file
+  const data = await prisma.task.update({
+    where: {
+      id: taskId,
+      userId: userFromDb?.id,
+    },
+    data: {
+      files: {},
+    },
+  });
 }

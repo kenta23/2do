@@ -32,40 +32,42 @@ export default async function RootLayout({
   console.log(pathname);
 
   return (
-    <div className="w-full h-full max-h-screen">
-      <div className="flex h-full min-h-screen max-h-screen">
-        <Sidebar />
+    <TodoNotifyContextProvider>
+      <div className="w-full h-full max-h-screen">
+        <div className="flex h-full min-h-screen max-h-screen">
+          <Sidebar />
 
-        <div className="w-full h-full">
-          <Search user={session?.user as User} />
+          <div className="w-full h-full">
+            <Search user={session?.user as User} />
 
-          <PageTitle>{children}</PageTitle>
+            <PageTitle>{children}</PageTitle>
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "text-center place-self-center items-center md:ms-[228px] flex justify-center align-bottom sticky bottom-3",
+            {
+              hidden: pathname.includes("/lists"),
+            }
+          )}
+        >
+          <AddNewTaskBtn />
+          <ToastContainer
+            position="top-right"
+            autoClose={2000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            transition={Bounce}
+          />
         </div>
       </div>
-
-      <div
-        className={cn(
-          "text-center place-self-center items-center md:ms-[228px] flex justify-center align-bottom sticky bottom-3",
-          {
-            hidden: pathname.includes("/lists"),
-          }
-        )}
-      >
-        <AddNewTaskBtn />
-        <ToastContainer
-          position="top-right"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          transition={Bounce}
-        />
-      </div>
-    </div>
+    </TodoNotifyContextProvider>
   );
 }

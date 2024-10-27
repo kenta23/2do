@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { basicInfoUser } from "./page";
+import { basicInfoUser } from "../app/(components)/collaborations/page";
 import { deleteTask, useDeleteMutation, useTaskListQuery } from "@/lib/queries";
 import TaskOptions from "@/components/TaskOptions";
 

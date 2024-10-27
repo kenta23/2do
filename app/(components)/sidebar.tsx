@@ -46,15 +46,9 @@ export const listItems: Array<{
   },
   {
     id: 4,
-    label: "My day",
+    label: "Collaborations",
     url: "/collaborations",
     icon: <UsersRound size={26} />,
-  },
-  {
-    id: 5,
-    label: "Work",
-    url: "/",
-    icon: <BriefcaseBusiness size={26} />,
   },
 ];
 
@@ -98,47 +92,18 @@ export default function Sidebar() {
         {/* TODO MENU LISTS */}
         <div className="w-full mt-8">
           <ul className="flex gap-3 flex-col items-start">
-            <Link
-              href={"/todo"}
-              className={cn("flex gap-2 items-center w-full h-[45px] px-3", {
-                "bg-secondaryColor text-white": pathname === "/todo",
-              })}
-            >
-              <Sun size={26} />
-              <li className="text-md">My day</li>
-            </Link>
-            <Link
-              href={"/planned"}
-              className={cn("flex gap-2 items-center w-full h-[45px] px-3", {
-                "bg-secondaryColor text-white": pathname === "/planned",
-              })}
-            >
-              <NotepadText size={26} />
-              <li className="text-md">Planned</li>
-            </Link>
-            <Link
-              href={"/collaborations"}
-              className={cn("flex gap-2 items-center w-full h-[45px] px-3", {
-                "bg-secondaryColor text-white": pathname === "/collaborations",
-              })}
-            >
-              <UsersRound size={26} />
-              <li className="text-md">Collaborative Tasks</li>
-            </Link>
-            <Link
-              href={"/"}
-              className="flex gap-2 items-center w-full h-[45px] px-3"
-            >
-              <BriefcaseBusiness size={26} />
-              <li className="text-md">Work</li>
-            </Link>
-            <Link
-              href={"/important"}
-              className="flex gap-2 items-center w-full h-[45px] px-3"
-            >
-              <Star size={26} />
-              <li className="text-md">Important</li>
-            </Link>
+            {listItems.map((list) => (
+              <Link
+                key={list.id}
+                href={list.url}
+                className={cn("flex gap-2 items-center w-full h-[45px] px-3", {
+                  "bg-secondaryColor text-white": pathname === list.url,
+                })}
+              >
+                {list.icon}
+                <li className="text-md">{list.label}</li>
+              </Link>
+            ))}
 
             <hr className="w-full" />
           </ul>
